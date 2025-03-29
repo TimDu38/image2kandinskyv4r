@@ -40,7 +40,7 @@ class Encoder:
         with open("data.py", "w") as f:
             f.write("rectangles = [")
             for i in self.rectangles:
-                f.write(f"({i[0]}, {i[1]}, {i[2]}, {i[3]}),")
+                f.write(f"({i[0]},{i[1]},{i[2]},{i[3]}),")
             f.write("]")
 
     def encode(self, mode):
