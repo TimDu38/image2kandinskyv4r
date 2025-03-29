@@ -1,0 +1,3 @@
+colors = None
+rectangles = None
+# PLACEHOLDER - WILL GET AUTO GENERATED WHEN USING THE CONVERTER
