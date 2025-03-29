@@ -69,7 +69,7 @@ class App(tk.Tk):
             except IOError:
                 messagebox.showerror("Error", "Cannot open image. Please check the file path.")
                 return
-            except Exception as e:
+            #except Exception as e:
                 messagebox.showerror("Error", e)
                 return
         else:

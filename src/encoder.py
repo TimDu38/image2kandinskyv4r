@@ -9,6 +9,7 @@ class Encoder:
         self.unique_colors = None
         self.converter = RectConverter()
         self.rectangles = None
+        self.colors = None
     
     def _open_image(self):
         try:
@@ -38,6 +39,7 @@ class Encoder:
     
     def _write_data(self):
         with open("data.py", "w") as f:
+            f.write(f"colors={self.colors}\n")
             f.write("rectangles = [")
             for i in self.rectangles:
                 f.write(f"({i[0]},{i[1]},{i[2]},{i[3]}),")
@@ -46,7 +48,7 @@ class Encoder:
     def encode(self, mode):
         self._open_image()
         self._get_colors()
-        self.rectangles = self.converter.convert_to_rect(self)
+        self.rectangles, self.colors = self.converter.convert_to_rect(self)
         if mode == "preview":
             pass
         else:
