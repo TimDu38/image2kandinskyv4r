@@ -8,7 +8,6 @@ class RectConverter:
         self.rectangles = None
 
     def _get_binary_image(self, encoder_obj):
-        print(encoder_obj.unique_colors)
         if None in encoder_obj.unique_colors:
             self.binary_image = [0 if i[3] < 127 else 1 for i in list(encoder_obj.img.getdata())]
         else:
@@ -114,7 +113,7 @@ class Encoder:
             raise ValueError("Image has too many colors")
     
     def _write_data(self):
-        with open("src/data.py", "w") as f:
+        with open("data.py", "w") as f:
             f.write("rectangles = [")
             for i in self.rectangles:
                 f.write(f"({i[0]}, {i[1]}, {i[2]}, {i[3]}),")

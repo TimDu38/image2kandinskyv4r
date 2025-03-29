@@ -46,10 +46,12 @@ class App(tk.Tk):
         self.quit_button.pack(padx=5, side=tk.LEFT)
 
     def select_image(self):
-        self.file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*webp;*.bmp;*.gif")])
-        self.encoder.path = self.file_path
-        if self.file_path:
-            self.file_path_label.config(text=f"Selected: {self.file_path}")
+        file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*webp;*.bmp;*.gif")])
+        if file_path != "":
+            self.file_path = file_path
+            self.encoder.path = self.file_path
+            if self.file_path:
+                self.file_path_label.config(text=f"Selected: {self.file_path}")
     
     def preview_image(self):
         self.convert_image("preview")
@@ -67,7 +69,7 @@ class App(tk.Tk):
             except IOError:
                 messagebox.showerror("Error", "Cannot open image. Please check the file path.")
                 return
-            except Exception as e:
+            #except Exception as e:
                 messagebox.showerror("Error", e)
                 return
         else:
