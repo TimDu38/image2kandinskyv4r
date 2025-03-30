@@ -1,7 +1,57 @@
 import tkinter as tk
+import time
+import math
 from tkinter import messagebox, filedialog
-from PIL import Image
 from encoder import Encoder
+
+
+class Previewer(tk.Canvas):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        self.rectangles_list = None
+        self.frame = None
+        self.enabled = False
+        self.cooldown = None
+        self.timestamp = None
+    
+    def convert_to_hex(self, rgb):
+        return "#{:02x}{:02x}{:02x}".format(*rgb)
+    
+
+    def enable(self, encoder_obj):
+
+        self.delete("all")
+        self.rectangles_list = encoder_obj.rectangles
+        self.frame = 0 if encoder_obj.converter.alpha_mode else 1
+        self.enabled = True
+        self.cooldown = 5 / len(self.rectangles_list)
+        self.timestamp = time.monotonic()
+        self.scaling_factor = max(math.floor(min(256 / encoder_obj.size[0], 224 / encoder_obj.size[1])),1)
+        print(self.scaling_factor)
+        bg_color = encoder_obj.unique_colors[0]
+        if bg_color is not None:
+            self.config(bg=self.convert_to_hex(bg_color))
+            print(bg_color)
+        else:
+            self.config(bg="#000000" if sum(encoder_obj.unique_colors[1]) > 382 else "#FFFFFF")
+        self.step_render_rectangles(encoder_obj)
+        
+
+    def step_render_rectangles(self, encoder_obj):
+        while self.enabled and time.monotonic() - self.timestamp >= self.cooldown:
+            self.timestamp += self.cooldown
+            if self.frame < len(self.rectangles_list):
+                rect = list(self.rectangles_list[self.frame])
+                rect = [i * self.scaling_factor for i in rect]
+                x, y, w, h= rect
+                x2 = x + w
+                y2 = y + h
+                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(encoder_obj.unique_colors[1]), outline="")
+                self.frame += 1
+            else:
+                self.enabled = False
+        self.after(50, lambda: self.step_render_rectangles(encoder_obj))
+
 
 class App(tk.Tk):
     def __init__(self):
@@ -24,7 +74,7 @@ class App(tk.Tk):
         self.image_label = tk.Label(self, text="Preview", font=("Arial", 16, "bold"), bg="#2E2E2E", fg="white")
         self.image_label.pack(pady=5)
 
-        self.canvas = tk.Canvas(self, width=256, height=224, bg="#000000", highlightthickness=0)
+        self.canvas = Previewer(self, width=256, height=224, bg="#000000", highlightthickness=0)
         self.canvas.pack(pady=5)
 
         self.file_path_label = tk.Label(self, text="No image selected", font=("Arial", 10, "bold"), bg="#2E2E2E", fg="white")
@@ -63,6 +113,9 @@ class App(tk.Tk):
                 self.encoder.encode(mode)
                 if mode != "preview":
                     messagebox.showinfo("Success", "Image converted successfully!")
+                else:
+                    self.canvas.enable(encoder_obj=self.encoder)
+
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
                 return

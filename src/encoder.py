@@ -43,15 +43,13 @@ class Encoder:
             f.write("rectangles = [")
             for i in self.rectangles:
                 f.write(f"({i[0]},{i[1]},{i[2]},{i[3]}),")
-            f.write("]")
+            f.write("]\n ")
 
     def encode(self, mode):
         self._open_image()
         self._get_colors()
         self.rectangles, self.unique_colors = self.converter.convert_to_rect(self)
-        if mode == "preview":
-            pass
-        else:
+        if mode != "preview":
             self._write_data()
         
         

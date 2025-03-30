@@ -95,7 +95,8 @@ class RectConverter:
                 if len(self.rectangles) < best_rectangles_count:
                     best_rectangles = self.rectangles.copy()
                     best_rectangles_count = len(self.rectangles)
-        return best_rectangles, colors
+                    colors_setting = colors.copy()
+        return best_rectangles, colors_setting
     
 
 
