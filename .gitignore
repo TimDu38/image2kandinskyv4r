@@ -1,4 +1,15 @@
+# Ignore all files in the images directory
 images/
+
+# Ignore the virtual environment directory
 .venv/
+
+# Ignore Python bytecode cache directories
 src/__pycache__/
+src/decoders/__pycache__/
+
+# Ignore a specific Python file
+src/decoders/decoder.py
+
+# Ignore the data.py file
 data.py

@@ -9,14 +9,12 @@ class RectConverter:
     def _get_binary_image(self, encoder_obj, swap_colors=False):
         self.unique_colors = encoder_obj.unique_colors
         if swap_colors:
-            unique_colors = encoder_obj.unique_colors[::-1]
-        else:
-            unique_colors = encoder_obj.unique_colors
-        if None in unique_colors:
+            self.unique_colors = encoder_obj.unique_colors[::-1]
+        if None in self.unique_colors:
             self.binary_image = [0 if i[3] < 127 else 1 for i in list(encoder_obj.img.getdata())]
             self.alpha_mode = True
         else:
-            self.binary_image = [0 if i[:3] == unique_colors[0] else 1 for i in list(encoder_obj.img.getdata())]
+            self.binary_image = [0 if i[:3] == self.unique_colors[0] else 1 for i in list(encoder_obj.img.getdata())]
             self.alpha_mode = False
         self.binary_image = [self.binary_image[i:i+encoder_obj.size[0]] for i in range(0, len(self.binary_image), encoder_obj.size[0])]
         self.size = encoder_obj.size
@@ -75,16 +73,12 @@ class RectConverter:
 
     def _add_background(self, encoder_obj, swap_colors=False):
         if not self.alpha_mode:
-            if not swap_colors:
-                colors = encoder_obj.unique_colors
-            else:
-                colors = encoder_obj.unique_colors[::-1]
+            colors = encoder_obj.unique_colors if not swap_colors else encoder_obj.unique_colors[::-1]
             self.rectangles.insert(0, (0, 0, self.size[0], self.size[1]))
+        elif encoder_obj.unique_colors[1] is None:
+            colors = encoder_obj.unique_colors[::-1]
         else:
-            if self.encoder_obj.unique_colors[1] is None:
-                colors = self.encoder_obj.unique_colors[::-1]
-            else:
-                colors = self.encoder_obj.unique_colors
+            colors = self.encoder_obj.unique_colors
         return colors
  
 
@@ -101,7 +95,7 @@ class RectConverter:
                 if len(self.rectangles) < best_rectangles_count:
                     best_rectangles = self.rectangles.copy()
                     best_rectangles_count = len(self.rectangles)
-        return best_rectangles,colors
+        return best_rectangles, colors
     
 
 
