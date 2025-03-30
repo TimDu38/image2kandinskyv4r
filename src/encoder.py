@@ -2,6 +2,16 @@ from PIL import Image
 from rect_converter import RectConverter
 
 class Encoder:
+    """Encoder class to convert an image into rectangles and colors for Numworks.
+    Attributes:
+        path (str): Path to the image file.
+        size (tuple): Size of the image.
+        img (PIL.Image): Image object.
+        unique_colors (list): List of unique colors in the image.
+        converter (RectConverter): RectConverter object for converting image to rectangles.
+        rectangles (list): List of rectangles representing the image.
+        colors (list): List of colors corresponding to the rectangles."""
+    
     def __init__(self):
         self.path = None
         self.size = None
@@ -12,6 +22,11 @@ class Encoder:
         self.colors = None
     
     def _open_image(self):
+        """Open the image file and convert it to RGBA format.
+        Raises:
+            IOError: If the image cannot be opened.
+            Exception: If an error occurs while opening the image.
+        """
         try:
             self.img = Image.open(self.path).convert("RGBA")
             self.size = self.img.size
@@ -22,6 +37,12 @@ class Encoder:
         
     
     def _get_colors(self):
+        """Get unique colors from the image.
+        Raises:
+            ValueError: If the image has too many colors or if the image is not in RGBA format.
+            Exception: If an error occurs while getting colors from the image.
+        """
+
         colors = self.img.getcolors()
         if colors is None:
             raise ValueError("Image has too many colors")
@@ -33,11 +54,17 @@ class Encoder:
             else:
                 if color[1][:3] not in unique_colors:
                     unique_colors.append(color[1][:3])
-        self.unique_colors = unique_colors
         if len(unique_colors) > 2:
             raise ValueError("Image has too many colors")
+        self.unique_colors = unique_colors
     
     def _write_data(self):
+        """Write the rectangles and colors to a Python file.
+        Raises:
+            IOError: If the file cannot be written.
+            Exception: If an error occurs while writing data to the file.
+        """
+
         with open("data.py", "w") as f:
             f.write(f"colors={self.unique_colors}\n")
             f.write("rectangles = [")
@@ -46,6 +73,10 @@ class Encoder:
             f.write("]\n ")
 
     def encode(self, mode):
+        """Encode the image into rectangles and colors.
+        Args:
+            mode (str): Mode of encoding ("preview" or "save"). """
+        
         self._open_image()
         self._get_colors()
         self.rectangles, self.unique_colors = self.converter.convert_to_rect(self)
