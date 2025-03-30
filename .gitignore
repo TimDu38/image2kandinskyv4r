@@ -7,7 +7,7 @@ images/
 # Ignore Python bytecode cache directories
 src/__pycache__/
 src/decoders/__pycache__/
-
+__pycache__/
 # Ignore a specific Python file
 src/decoders/draw_test.py
 
