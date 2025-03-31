@@ -10,7 +10,7 @@ class Encoder:
         unique_colors (list): List of unique colors in the image.
         converter (RectConverter): RectConverter object for converting image to rectangles.
         rectangles (list): List of rectangles representing the image.
-        colors (list): List of colors corresponding to the rectangles."""
+        palette (list): List of colors corresponding to the rectangles."""
     
     def __init__(self):
         self.path = None
@@ -19,7 +19,7 @@ class Encoder:
         self.unique_colors = None
         self.converter = RectConverter()
         self.rectangles = None
-        self.colors = None
+        self.palette = None
     
     def _open_image(self):
         """Open the image file and convert it to RGBA format.
@@ -50,12 +50,10 @@ class Encoder:
         for color in colors:
             if color[1][3] < 127:  # Check if the pixel is transparent
                 if None not in unique_colors:
-                    unique_colors.append(None)
+                    unique_colors.insert(0, None)
             else:
                 if color[1][:3] not in unique_colors:
                     unique_colors.append(color[1][:3])
-        if len(unique_colors) > 2:
-            raise ValueError("Image has too many colors")
         self.unique_colors = unique_colors
     
     def _write_data(self):
@@ -66,10 +64,23 @@ class Encoder:
         """
 
         with open("data.py", "w") as f:
-            f.write(f"colors={self.unique_colors}\n")
+            f.write(f"colors=[")
+            for i in self.palette:
+                f_string = "("
+                for j in i:
+                    f_string += f"{j},"
+                f_string = f_string[:-1]
+                f_string += "),"
+                f.write(f_string)
+            f.write("]\n")
             f.write("rectangles = [")
             for i in self.rectangles:
-                f.write(f"({i[0]},{i[1]},{i[2]},{i[3]}),")
+                f_string = "("
+                for j in i:
+                    f_string += f"{j},"
+                f_string = f_string[:-1]
+                f_string += "),"
+                f.write(f_string)
             f.write("]\n ")
 
     def encode(self, mode):
@@ -79,7 +90,7 @@ class Encoder:
         
         self._open_image()
         self._get_colors()
-        self.rectangles, self.unique_colors = self.converter.convert_to_rect(self)
+        self.rectangles, self.palette = self.converter.convert_to_rect(self)
         if mode != "preview":
             self._write_data()
         

@@ -43,24 +43,29 @@ class Previewer(tk.Canvas):
         encoder_obj (Encoder): Encoder object containing image data and rectangles."""
 
         self.delete("all")
-        self.rectangles_list = encoder_obj.rectangles
+        self.rectangles_list = list(set(encoder_obj.rectangles.copy()[1:])) if None in encoder_obj.palette else [encoder_obj.rectangles[0]] + list(set(encoder_obj.rectangles.copy()[1:]))
         self.rectangles_count = len(self.rectangles_list)
-        self.frame = 0 if encoder_obj.converter.alpha_mode else 1
+        self.frame = 0 
         self.enabled = True
-        self.cooldown = 5 / len(self.rectangles_list)
+        self.cooldown = 5 / self.rectangles_count
         self.timestamp = time.monotonic()
         self.scaling_factor = max(math.floor(min(256 / encoder_obj.size[0], 224 / encoder_obj.size[1])),1)
         self.img_size = encoder_obj.size
-        self.colors_count = len(encoder_obj.unique_colors)
-        self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224- self.img_size[1] * self.scaling_factor) // 2
-        bg_color = encoder_obj.unique_colors[0]
-        if bg_color is not None:
-            self.config(bg=self.convert_to_hex(bg_color))
-            self.config(highlightbackground=self.convert_to_hex(encoder_obj.unique_colors[1]))
-        else:
-            self.config(bg="#000000" if sum(encoder_obj.unique_colors[1]) > 382 else "#FFFFFF")
-            self.config(highlightbackground="#FFFFFF" if sum(encoder_obj.unique_colors[1]) > 382 else "#000000")
-        
+        self.colors_count = len(encoder_obj.palette)
+        self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
+        self.config(highlightbackground="#000000")
+        self.config(bg="#222222")
+        bg_color = encoder_obj.palette[0]
+        if bg_color is None:
+            switch = False
+            square_size = self.scaling_factor
+            for y in range(self.offset[1], self.img_size[1] * self.scaling_factor + self.offset[1], square_size):
+                for x in range(self.offset[0], self.img_size[0] * self.scaling_factor + self.offset[0], square_size):
+                    color = "#BFBFBF" if switch else "#808080"
+                    self.create_rectangle(x, y, x + square_size, y + square_size, fill=color, outline="")
+                    switch = not switch
+                switch = not switch
+    
 
     def step_render_rectangles(self, encoder_obj):
         """Render rectangles step by step.
@@ -70,13 +75,18 @@ class Previewer(tk.Canvas):
             self.timestamp += self.cooldown
             if self.frame < len(self.rectangles_list):
                 rect = list(self.rectangles_list[self.frame])
-                rect = [i * self.scaling_factor for i in rect]
-                x, y, w, h= rect
+                if len(rect) == 5:
+                    rect = [i * self.scaling_factor for i in rect[:-1]] + [rect[-1]]
+                    x, y, w, h, c = rect
+                else:
+                    rect = [i * self.scaling_factor for i in rect]
+                    x, y, w, h = rect
+                    c = 0
                 x2 = x + w + self.offset[0]
                 y2 = y + h + self.offset[1]
                 x += self.offset[0]
                 y += self.offset[1]
-                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(encoder_obj.unique_colors[1]), outline="")
+                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(encoder_obj.palette[c]), outline="")
                 self.frame += 1
                 scale_text = f" (x{self.scaling_factor} scaled)" if self.scaling_factor != 1 else ""
                 self.parent.rectangle_count_label.config(text=f"Rectangles count: {self.frame}/{self.rectangles_count} | Colors: {self.colors_count} | Size: {self.img_size[0]}x{self.img_size[1]}{scale_text}")
