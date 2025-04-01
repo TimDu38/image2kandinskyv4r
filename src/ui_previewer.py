@@ -43,7 +43,7 @@ class Previewer(tk.Canvas):
         encoder_obj (Encoder): Encoder object containing image data and rectangles."""
 
         self.delete("all")
-        self.rectangles_list = list(set(encoder_obj.rectangles.copy()[1:])) if None in encoder_obj.palette else [encoder_obj.rectangles[0]] + list(set(encoder_obj.rectangles.copy()[1:]))
+        self.rectangles_list = list(set(encoder_obj.rectangles.copy())) if self.parent.encoder.alpha_mode in encoder_obj.palette else [encoder_obj.rectangles[0]] + list(set(encoder_obj.rectangles.copy()[1:]))
         self.rectangles_count = len(self.rectangles_list)
         self.frame = 0 
         self.enabled = True
@@ -55,8 +55,7 @@ class Previewer(tk.Canvas):
         self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
         self.config(highlightbackground="#000000")
         self.config(bg="#222222")
-        bg_color = encoder_obj.palette[0]
-        if bg_color is None:
+        if encoder_obj.alpha_mode:
             switch = False
             square_size = self.scaling_factor
             for y in range(self.offset[1], self.img_size[1] * self.scaling_factor + self.offset[1], square_size):
@@ -75,13 +74,8 @@ class Previewer(tk.Canvas):
             self.timestamp += self.cooldown
             if self.frame < len(self.rectangles_list):
                 rect = list(self.rectangles_list[self.frame])
-                if len(rect) == 5:
-                    rect = [i * self.scaling_factor for i in rect[:-1]] + [rect[-1]]
-                    x, y, w, h, c = rect
-                else:
-                    rect = [i * self.scaling_factor for i in rect]
-                    x, y, w, h = rect
-                    c = 0
+                rect = [i * self.scaling_factor for i in rect[:-1]] + [rect[-1]]
+                x, y, w, h, c = rect
                 x2 = x + w + self.offset[0]
                 y2 = y + h + self.offset[1]
                 x += self.offset[0]

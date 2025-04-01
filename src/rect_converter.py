@@ -6,36 +6,28 @@ class RectConverter:
         binary_image (list): Binary representation of the image.
         size (tuple): Size of the image.
         rectangles (list): List of rectangles representing the image.
-        alpha_mode (bool): Indicates if the image has an alpha channel.
-        unique_colors (list): List of unique colors in the image."""
+        unique_colors (list): List of unique colors in the image.
+        alpha_mode (bool): Indicates if the image has an alpha channel."""
     
     def __init__(self):
         self.binary_image = None
         self.size = None
         self.rectangles = None
-        self.alpha_mode = None
         self.unique_colors = None
+        self.alpha_mode = None
 
 
-    def _add_background_and_initialize(self, bg_index, encoder_obj):
+    def _initialize(self, encoder_obj):
         """Add background color to the rectangles.
         This method adds a background rectangle if the image is not transparent.
         Also swaps the colors if specified.
         Args:
-            bg_index (int): Background color index .
             encoder_obj (Encoder): Encoder object containing image data.
         """
         self.rectangles = []
         self.unique_colors = encoder_obj.unique_colors.copy()
         self.size = encoder_obj.size
-        
-        if None in self.unique_colors:
-            self.unique_colors = self.unique_colors
-        else:
-            bg_color = self.unique_colors[bg_index]
-            self.unique_colors.pop(bg_index)
-            self.unique_colors.insert(0, bg_color)
-        self.rectangles.insert(0, (0, 0, self.size[0], self.size[1]))
+        self.alpha_mode = encoder_obj.alpha_mode
 
     
     def _get_binary_image(self, encoder_obj):
@@ -43,21 +35,23 @@ class RectConverter:
         Args:
             encoder_obj (Encoder): Encoder object containing image data.
         """
-        self.binary_image = [self.unique_colors.index(i[:3]) if i[3] > 127 else 0 for i in list(encoder_obj.img.getdata())]
+        self.binary_image = [self.unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(encoder_obj.img.getdata())]
         self.binary_image = [self.binary_image[i:i+self.size[0]] for i in range(0, len(self.binary_image), encoder_obj.size[0])]
 
 
-    def _get_rectangles(self):
+    def _get_rectangles(self, bg_index=None):
         """Get rectangles from the binary image.
         This method scans the binary image and identifies rectangles of 1s.
         It marks the used pixels to avoid counting them multiple times.
         Args:
             bg_color_index (int) : the color index of the background in self.unique_colors
         """
+        if not self.alpha_mode:
+            self.rectangles.append((0, 0, self.size[0], self.size[1], bg_index))
         used_pixels = [[0 for _ in range(self.size[0])] for _ in range(self.size[1])]
         for i in range(self.size[1]):
             for j in range(self.size[0]):
-                if self.binary_image[i][j] != 0 and used_pixels[i][j] == 0:
+                if self.binary_image[i][j] not in [bg_index, -1] and used_pixels[i][j] == 0:
                     current_color_index = self.binary_image[i][j]
                     x, y = j, i
                     while x < self.size[0] and self.binary_image[i][x] == current_color_index and used_pixels[i][x] == 0:
@@ -115,8 +109,8 @@ class RectConverter:
         Args:
             encoder_obj (Encoder): Encoder object containing image data.
         """
-        if None in encoder_obj.unique_colors:
-            self._add_background_and_initialize(None, encoder_obj)
+        if encoder_obj.alpha_mode:
+            self._initialize(encoder_obj)
             self._get_binary_image(encoder_obj)
             self._get_rectangles()
             self._merge_rectangles()
@@ -127,10 +121,10 @@ class RectConverter:
             best_rectangles = []
             best_rectangles_count = float("inf")
             best_colors_palette = []
-            for i in range(len(encoder_obj.unique_colors)):
-                self._add_background_and_initialize(i, encoder_obj)
+            for i in range(max(len(encoder_obj.unique_colors), 10)):
+                self._initialize(encoder_obj)
                 self._get_binary_image(encoder_obj)
-                self._get_rectangles()
+                self._get_rectangles(i)
                 self._merge_rectangles()
                 if len(self.rectangles) < best_rectangles_count:
                     best_rectangles = self.rectangles.copy()

@@ -8,6 +8,7 @@ class Encoder:
         size (tuple): Size of the image.
         img (PIL.Image): Image object.
         unique_colors (list): List of unique colors in the image.
+        alpha_mode (bool): Indicates if the image has an alpha channel.
         converter (RectConverter): RectConverter object for converting image to rectangles.
         rectangles (list): List of rectangles representing the image.
         palette (list): List of colors corresponding to the rectangles."""
@@ -17,6 +18,7 @@ class Encoder:
         self.size = None
         self.img = None
         self.unique_colors = None
+        self.alpha_mode = None
         self.converter = RectConverter()
         self.rectangles = None
         self.palette = None
@@ -47,13 +49,13 @@ class Encoder:
         if colors is None:
             raise ValueError("Image has too many colors")
         unique_colors = []
+        self.alpha_mode = False
         for color in colors:
-            if color[1][3] < 127:  # Check if the pixel is transparent
-                if None not in unique_colors:
-                    unique_colors.insert(0, None)
-            else:
+            if color[1][3] > 127:  # Check if the pixel is not transparent
                 if color[1][:3] not in unique_colors:
                     unique_colors.append(color[1][:3])
+            else:
+                self.alpha_mode = True
         self.unique_colors = unique_colors
     
     def _write_data(self):
