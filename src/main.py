@@ -63,7 +63,7 @@ class App(tk.Tk):
         self.select_button = tk.Button(button_frame, text="Select Image", command=self.select_image, bg="#4CAF50", fg="white")
         self.select_button.pack(padx=5, side=tk.LEFT)
 
-        self.preview_button = tk.Button(button_frame, text="Preview", command=self.preview_image, bg="#FF9800", fg="white")
+        self.preview_button = tk.Button(button_frame, text="Preview", command=lambda: self.convert_image("preview"), bg="#FF9800", fg="white")
         self.preview_button.pack(padx=5, side=tk.LEFT)
 
         self.convert_button = tk.Button(button_frame, text="Convert", command=self.convert_image, bg="#2196F3", fg="white")
@@ -90,7 +90,6 @@ class App(tk.Tk):
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*webp;*.bmp;*.gif")])
         if file_path != "":
             self.file_path = file_path
-            self.encoder.path = self.file_path
             self.file_path_label.config(text=f"Image selected: {self.file_path}")
     
 
@@ -106,7 +105,7 @@ class App(tk.Tk):
         if palette_path != "":
             self.palette_path = palette_path
             try:
-                self.encoder._open_palette()
+                self.encoder._open_palette_image()
                 self.encoder._get_palette_colors()
                 self.palette_path_label.config(text=f"Custom palette selected: {self.palette_path}")
             except Exception as e:

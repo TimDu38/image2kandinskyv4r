@@ -27,7 +27,8 @@ class RectConverter:
             try:
                 self.binary_image = [self.encoder.palette_unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
             except ValueError:
-                raise Exception("Image includes color(s) missing in the custom palette")
+                raise Exception("This image contains color(s) that are not in the loaded palette. \n Please load a compatible image with the palette, or unload the palette.")
+            
         self.binary_image = [self.binary_image[i:i+self.encoder.size[0]] for i in range(0, len(self.binary_image), self.encoder.size[0])]
 
 

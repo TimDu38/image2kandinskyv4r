@@ -25,33 +25,33 @@ class Encoder:
         self.rectangles = None
     
 
-    def _open_image(self):
-        """Open the image file and convert it to RGBA format.
+    def _open_image(self, file_path, attr_name):
+        """Open an image file and convert it to RGBA format.
+        
+        Args:
+            file_path (str): The path to the image file.
+            attr_name (str): The attribute name to store the opened image.
+        
         Raises:
             IOError: If the image cannot be opened.
             Exception: If an error occurs while opening the image.
         """
         try:
-            self.img = Image.open(self.app.file_path).convert("RGBA")
-            self.size = self.img.size
+            img = Image.open(file_path).convert("RGBA")
+            setattr(self, attr_name, img)
+            if attr_name == "img":  # Only update size for the main image
+                self.size = img.size
         except IOError:
-            raise IOError(f"Cannot open image: {self.app.file_path}")
+            raise IOError(f"Cannot open image: {file_path}")
         except Exception as e:
             raise Exception(f"An error occurred while opening the image: {e}")
-    
-    def _open_palette(self):
-        """Open the palette file and convert it to RGBA format.
-        Raises:
-            IOError: If the image cannot be opened.
-            Exception: If an error occurs while opening the image.
-        """
-        try:
-            self.palette_img = Image.open(self.app.palette_path).convert("RGBA")
-        except IOError:
-            raise IOError(f"Cannot open palette image: {self.app.palette_path}")
-        except Exception as e:
-            raise Exception(f"An error occurred while opening the palette: {e}")
-        
+
+    def _open_main_image(self):
+        self._open_image(self.app.file_path, "img")
+
+    def _open_palette_image(self):
+        self._open_image(self.app.palette_path, "palette_img")
+
     
     def _get_colors(self):
         """Get unique colors from the image.
@@ -71,7 +71,7 @@ class Encoder:
             else:
                 self.alpha_mode = True
 
-        unique_colors.sort(key= lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
+        unique_colors.sort(key=lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
         self.unique_colors = unique_colors
     
     def _get_palette_colors(self):
@@ -122,12 +122,9 @@ class Encoder:
         Args:
             mode (str): Mode of encoding ("preview" or "save"). """
         
-        self._open_image()
+        self._open_main_image()
         self._get_colors()
         self.converter.convert_to_rect()
-        print(self.rectangles)
-        print(self.unique_colors) 
-        print(self.palette_unique_colors)
         if mode != "preview":
             self._write_data()
         
