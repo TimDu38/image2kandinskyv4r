@@ -4,7 +4,7 @@ from rect_converter import RectConverter
 class Encoder:
     """Encoder class to convert an image into rectangles and colors for Numworks.
     Attributes:
-        path (str): Path to the image file.
+        app (obj): Instance of the main app.
         size (tuple): Size of the image.
         img (PIL.Image): Image object.
         unique_colors (list): List of unique colors in the image.
@@ -13,16 +13,18 @@ class Encoder:
         rectangles (list): List of rectangles representing the image.
         palette (list): List of colors corresponding to the rectangles."""
     
-    def __init__(self):
-        self.path = None
+    def __init__(self, app):
+        self.app = app
         self.size = None
         self.img = None
         self.unique_colors = None
+        self.palette_img = None
+        self.palette_unique_colors = None
         self.alpha_mode = None
-        self.converter = RectConverter()
+        self.converter = RectConverter(self.app, self)
         self.rectangles = None
-        self.palette = None
     
+
     def _open_image(self):
         """Open the image file and convert it to RGBA format.
         Raises:
@@ -30,19 +32,31 @@ class Encoder:
             Exception: If an error occurs while opening the image.
         """
         try:
-            self.img = Image.open(self.path).convert("RGBA")
+            self.img = Image.open(self.app.file_path).convert("RGBA")
             self.size = self.img.size
         except IOError:
-            raise IOError(f"Cannot open image: {self.path}")
+            raise IOError(f"Cannot open image: {self.app.file_path}")
         except Exception as e:
             raise Exception(f"An error occurred while opening the image: {e}")
+    
+    def _open_palette(self):
+        """Open the palette file and convert it to RGBA format.
+        Raises:
+            IOError: If the image cannot be opened.
+            Exception: If an error occurs while opening the image.
+        """
+        try:
+            self.palette_img = Image.open(self.app.palette_path).convert("RGBA")
+        except IOError:
+            raise IOError(f"Cannot open palette image: {self.app.palette_path}")
+        except Exception as e:
+            raise Exception(f"An error occurred while opening the palette: {e}")
         
     
     def _get_colors(self):
         """Get unique colors from the image.
         Raises:
             ValueError: If the image has too many colors or if the image is not in RGBA format.
-            Exception: If an error occurs while getting colors from the image.
         """
 
         colors = self.img.getcolors()
@@ -56,7 +70,23 @@ class Encoder:
                     unique_colors.append(color[1][:3])
             else:
                 self.alpha_mode = True
+
+        unique_colors.sort(key= lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
         self.unique_colors = unique_colors
+    
+    def _get_palette_colors(self):
+        colors = self.palette_img.getcolors()
+        if colors is None:
+            raise ValueError("Palette has too many colors")
+        unique_colors = []
+        self.alpha_mode = False
+        for color in colors:
+            if color[1][3] > 127:  # Check if the pixel is not transparent
+                if color[1][:3] not in unique_colors:
+                    unique_colors.append(color[1][:3])
+        unique_colors.sort(key= lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
+        self.palette_unique_colors = unique_colors
+
     
     def _write_data(self):
         """Write the rectangles and colors to a Python file.
@@ -64,10 +94,12 @@ class Encoder:
             IOError: If the file cannot be written.
             Exception: If an error occurs while writing data to the file.
         """
+        def get_color_list():
+            return self.unique_colors if self.app.palette_path is None else self.palette_unique_colors
 
         with open("data.py", "w") as f:
             f.write(f"colors=[")
-            for i in self.palette:
+            for i in get_color_list():
                 f_string = "("
                 for j in i:
                     f_string += f"{j},"
@@ -92,7 +124,10 @@ class Encoder:
         
         self._open_image()
         self._get_colors()
-        self.rectangles, self.palette = self.converter.convert_to_rect(self)
+        self.converter.convert_to_rect()
+        print(self.rectangles)
+        print(self.unique_colors) 
+        print(self.palette_unique_colors)
         if mode != "preview":
             self._write_data()
         

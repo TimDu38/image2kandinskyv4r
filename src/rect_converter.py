@@ -7,36 +7,28 @@ class RectConverter:
         size (tuple): Size of the image.
         rectangles (list): List of rectangles representing the image.
         unique_colors (list): List of unique colors in the image.
-        alpha_mode (bool): Indicates if the image has an alpha channel."""
+        alpha_mode (bool): Indicates if the image has an alpha channel.
+        encoder (obj): stores the parent encoder object reference.
+        """
     
-    def __init__(self):
+    def __init__(self, app, encoder):
         self.binary_image = None
-        self.size = None
         self.rectangles = None
-        self.unique_colors = None
-        self.alpha_mode = None
-
-
-    def _initialize(self, encoder_obj):
-        """Add background color to the rectangles.
-        This method adds a background rectangle if the image is not transparent.
-        Also swaps the colors if specified.
-        Args:
-            encoder_obj (Encoder): Encoder object containing image data.
-        """
-        self.rectangles = []
-        self.unique_colors = encoder_obj.unique_colors.copy()
-        self.size = encoder_obj.size
-        self.alpha_mode = encoder_obj.alpha_mode
+        self.app = app
+        self.encoder = encoder
 
     
-    def _get_binary_image(self, encoder_obj):
+    def _get_binary_image(self):
         """Get the binary image representation of the image.
-        Args:
-            encoder_obj (Encoder): Encoder object containing image data.
         """
-        self.binary_image = [self.unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(encoder_obj.img.getdata())]
-        self.binary_image = [self.binary_image[i:i+self.size[0]] for i in range(0, len(self.binary_image), encoder_obj.size[0])]
+        if self.app.palette_path is None:
+            self.binary_image = [self.encoder.unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
+        else:
+            try:
+                self.binary_image = [self.encoder.palette_unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
+            except ValueError:
+                raise Exception("Image includes color(s) missing in the custom palette")
+        self.binary_image = [self.binary_image[i:i+self.encoder.size[0]] for i in range(0, len(self.binary_image), self.encoder.size[0])]
 
 
     def _get_rectangles(self, bg_index=None):
@@ -46,17 +38,18 @@ class RectConverter:
         Args:
             bg_color_index (int) : the color index of the background in self.unique_colors
         """
-        if not self.alpha_mode:
-            self.rectangles.append((0, 0, self.size[0], self.size[1], bg_index))
-        used_pixels = [[0 for _ in range(self.size[0])] for _ in range(self.size[1])]
-        for i in range(self.size[1]):
-            for j in range(self.size[0]):
+        self.rectangles = []
+        if not self.encoder.alpha_mode:
+            self.rectangles.append((0, 0, self.encoder.size[0], self.encoder.size[1], bg_index))
+        used_pixels = [[0 for _ in range(self.encoder.size[0])] for _ in range(self.encoder.size[1])]
+        for i in range(self.encoder.size[1]):
+            for j in range(self.encoder.size[0]):
                 if self.binary_image[i][j] not in [bg_index, -1] and used_pixels[i][j] == 0:
                     current_color_index = self.binary_image[i][j]
                     x, y = j, i
-                    while x < self.size[0] and self.binary_image[i][x] == current_color_index and used_pixels[i][x] == 0:
+                    while x < self.encoder.size[0] and self.binary_image[i][x] == current_color_index and used_pixels[i][x] == 0:
                         x += 1
-                    while y < self.size[1] and all(pixel == current_color_index for pixel in self.binary_image[y][j:x]) and 1 not in used_pixels[y][j:x]:
+                    while y < self.encoder.size[1] and all(pixel == current_color_index for pixel in self.binary_image[y][j:x]) and 1 not in used_pixels[y][j:x]:
                         y += 1
                     for k in range(i, y):
                         for l in range(j, x):
@@ -102,35 +95,33 @@ class RectConverter:
 
  
 
-    def convert_to_rect(self, encoder_obj):
+    def convert_to_rect(self):
         """Convert the image to rectangles.
         This method tries to convert the image to rectangles with and without swapping colors.
         It returns the best rectangles and colors based on the number of rectangles.
-        Args:
-            encoder_obj (Encoder): Encoder object containing image data.
         """
-        if encoder_obj.alpha_mode:
-            self._initialize(encoder_obj)
-            self._get_binary_image(encoder_obj)
+        def get_index_list():
+            if self.app.palette_path == None:
+                return self.encoder.unique_colors
+            else:
+                return [k for k, v in enumerate(self.encoder.palette_unique_colors) if v in self.encoder.unique_colors]
+        
+
+        self._get_binary_image()
+        if self.encoder.alpha_mode:
             self._get_rectangles()
             self._merge_rectangles()
-            rectangles = self.rectangles
-            colors = self.unique_colors
-            return rectangles, colors
+            self.encoder.rectangles = self.rectangles.copy()
         else:
             best_rectangles = []
             best_rectangles_count = float("inf")
-            best_colors_palette = []
-            for i in range(max(len(encoder_obj.unique_colors), 10)):
-                self._initialize(encoder_obj)
-                self._get_binary_image(encoder_obj)
+            for i in range(min(len(get_index_list()), 10)):
                 self._get_rectangles(i)
                 self._merge_rectangles()
                 if len(self.rectangles) < best_rectangles_count:
                     best_rectangles = self.rectangles.copy()
                     best_rectangles_count = len(self.rectangles)
-                    best_colors_palette = self.unique_colors.copy()
-        return best_rectangles, best_colors_palette
+            self.encoder.rectangles = best_rectangles.copy()
     
 
 

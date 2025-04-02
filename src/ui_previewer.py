@@ -20,17 +20,19 @@ class Previewer(tk.Canvas):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         self.parent = parent
+        self.encoder = parent.encoder
         self.rectangles_list = None
         self.rectangles_count = None
         self.img_size = None
         self.colors_count = None
+        self.colors_list = None
         self.scaling_factor = None
         self.frame = None
         self.enabled = False
         self.cooldown = None
         self.timestamp = None
         self.offset = None
-        self.step_render_rectangles(self.parent.encoder)
+        self.step_render_rectangles()
 
     @staticmethod
     def convert_to_hex(rgb):
@@ -38,24 +40,25 @@ class Previewer(tk.Canvas):
         return "#{:02x}{:02x}{:02x}".format(*rgb)
     
 
-    def enable(self, encoder_obj):
+    def enable(self):
         """Enable the previewer and start rendering rectangles. Args:
-        encoder_obj (Encoder): Encoder object containing image data and rectangles."""
+        """
 
         self.delete("all")
-        self.rectangles_list = list(set(encoder_obj.rectangles.copy())) if self.parent.encoder.alpha_mode in encoder_obj.palette else [encoder_obj.rectangles[0]] + list(set(encoder_obj.rectangles.copy()[1:]))
+        self.rectangles_list = list(set(self.encoder.rectangles.copy())) if self.parent.encoder.alpha_mode else [self.encoder.rectangles[0]] + list(set(self.encoder.rectangles.copy()[1:]))
         self.rectangles_count = len(self.rectangles_list)
         self.frame = 0 
         self.enabled = True
         self.cooldown = 5 / self.rectangles_count
         self.timestamp = time.monotonic()
-        self.scaling_factor = max(math.floor(min(256 / encoder_obj.size[0], 224 / encoder_obj.size[1])),1)
-        self.img_size = encoder_obj.size
-        self.colors_count = len(encoder_obj.palette)
+        self.scaling_factor = max(math.floor(min(256 / self.encoder.size[0], 224 / self.encoder.size[1])),1)
+        self.img_size = self.encoder.size
+        self.colors_list = self.encoder.unique_colors.copy() if self.parent.palette_path is None else self.encoder.palette_unique_colors.copy()
+        self.colors_count = len(self.colors_list)
         self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
         self.config(highlightbackground="#000000")
         self.config(bg="#222222")
-        if encoder_obj.alpha_mode:
+        if self.encoder.alpha_mode:
             switch = False
             square_size = self.scaling_factor
             for y in range(self.offset[1], self.img_size[1] * self.scaling_factor + self.offset[1], square_size):
@@ -66,10 +69,9 @@ class Previewer(tk.Canvas):
                 switch = not switch
     
 
-    def step_render_rectangles(self, encoder_obj):
+    def step_render_rectangles(self):
         """Render rectangles step by step.
-        Args: 
-        encoder_obj (Encoder): Encoder object containing image data and rectangles."""
+        """
         while self.enabled and time.monotonic() - self.timestamp >= self.cooldown:
             self.timestamp += self.cooldown
             if self.frame < len(self.rectangles_list):
@@ -80,11 +82,11 @@ class Previewer(tk.Canvas):
                 y2 = y + h + self.offset[1]
                 x += self.offset[0]
                 y += self.offset[1]
-                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(encoder_obj.palette[c]), outline="")
+                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(self.colors_list[c]), outline="")
                 self.frame += 1
                 scale_text = f" (x{self.scaling_factor} scaled)" if self.scaling_factor != 1 else ""
                 self.parent.rectangle_count_label.config(text=f"Rectangles count: {self.frame}/{self.rectangles_count} | Colors: {self.colors_count} | Size: {self.img_size[0]}x{self.img_size[1]}{scale_text}")
             else:
                 self.enabled = False
-        self.after(16, lambda: self.step_render_rectangles(encoder_obj))
+        self.after(16, self.step_render_rectangles)
 
