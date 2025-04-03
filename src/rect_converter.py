@@ -118,7 +118,6 @@ class RectConverter:
         else:
             best_rectangles = []
             best_rectangles_count = float("inf")
-            print(get_index_list())
             for i in get_index_list():
                 self._get_rectangles(i)
                 self._merge_rectangles()

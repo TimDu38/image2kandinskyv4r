@@ -89,6 +89,7 @@ class App(tk.Tk):
         The selected file path is stored in self.file_path."""
         file_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*webp;*.bmp;*.gif")])
         if file_path != "":
+            self.encoder.converted_flag = False
             self.file_path = file_path
             self.file_path_label.config(text=f"Image selected: {self.file_path}")
     
@@ -96,6 +97,7 @@ class App(tk.Tk):
     def reset_palette(self):
         self.palette_path = None
         self.palette_path_label.config(text=f"No custom palette selected")
+        self.encoder.converted_flag = False
 
 
     def select_palette(self):
@@ -104,6 +106,7 @@ class App(tk.Tk):
         palette_path = filedialog.askopenfilename(filetypes=[("Image files", "*.png;*.jpg;*.jpeg;*webp;*.bmp;*.gif")])
         if palette_path != "":
             self.palette_path = palette_path
+            self.encoder.converted_flag = False
             try:
                 self.encoder._open_palette_image()
                 self.encoder._get_palette_colors()
@@ -122,11 +125,17 @@ class App(tk.Tk):
         
         if self.file_path is not None:
             try:
-                self.encoder.encode(mode)
+                if not self.encoder.converted_flag:
+                    self.encoder.encode()
+                    self.canvas.load_data()
                 if mode != "preview":
+                    self.encoder._write_data()
                     messagebox.showinfo("Success", "Image converted successfully!")
+
                 else:
                     self.canvas.enable()
+
+                self.encoder.converted_flag = True
 
             except ValueError as e:
                 messagebox.showerror("Error", str(e))
@@ -134,7 +143,7 @@ class App(tk.Tk):
             except IOError:
                 messagebox.showerror("Error", "Cannot open image. Please check the file path.")
                 return
-            #except Exception as e:
+            except Exception as e:
                 messagebox.showerror("Error", e)
                 return
         else:

@@ -23,6 +23,7 @@ class Encoder:
         self.alpha_mode = None
         self.converter = RectConverter(self.app, self)
         self.rectangles = None
+        self.converted_flag = False
     
 
     def _open_image(self, file_path, attr_name):
@@ -117,16 +118,12 @@ class Encoder:
                 f.write(f_string)
             f.write("]\n ")
 
-    def encode(self, mode):
+    def encode(self):
         """Encode the image into rectangles and colors.
-        Args:
-            mode (str): Mode of encoding ("preview" or "save"). """
-        
+        """
         self._open_main_image()
         self._get_colors()
         self.converter.convert_to_rect()
-        if mode != "preview":
-            self._write_data()
         
         
 

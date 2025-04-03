@@ -39,25 +39,28 @@ class Previewer(tk.Canvas):
         """Convert RGB tuple to hex string."""
         return "#{:02x}{:02x}{:02x}".format(*rgb)
     
+    
+    def load_data(self):
+        self.rectangles_list = list(set(self.encoder.rectangles.copy())) if self.parent.encoder.alpha_mode else [self.encoder.rectangles[0]] + list(set(self.encoder.rectangles.copy()[1:]))
+        self.rectangles_count = len(self.rectangles_list)
+        self.cooldown = 5 / self.rectangles_count
+        self.scaling_factor = max(math.floor(min(256 / self.encoder.size[0], 224 / self.encoder.size[1])),1)
+        self.img_size = self.encoder.size
+        self.colors_list = self.encoder.unique_colors.copy() if self.parent.palette_path is None else self.encoder.palette_unique_colors.copy()
+        self.colors_count = len(self.encoder.unique_colors)
+        self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
+        self.config(highlightbackground="#000000")
+        self.config(bg="#222222")
 
     def enable(self):
         """Enable the previewer and start rendering rectangles. Args:
         """
-
-        self.delete("all")
-        self.rectangles_list = list(set(self.encoder.rectangles.copy())) if self.parent.encoder.alpha_mode else [self.encoder.rectangles[0]] + list(set(self.encoder.rectangles.copy()[1:]))
-        self.rectangles_count = len(self.rectangles_list)
+        self.timestamp = time.monotonic()
         self.frame = 0 
         self.enabled = True
-        self.cooldown = 5 / self.rectangles_count
-        self.timestamp = time.monotonic()
-        self.scaling_factor = max(math.floor(min(256 / self.encoder.size[0], 224 / self.encoder.size[1])),1)
-        self.img_size = self.encoder.size
-        self.colors_list = self.encoder.unique_colors.copy() if self.parent.palette_path is None else self.encoder.palette_unique_colors.copy()
-        self.colors_count = len(self.colors_list)
-        self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
-        self.config(highlightbackground="#000000")
-        self.config(bg="#222222")
+        self.delete("all")
+        if not self.encoder.converted_flag:
+            self.load_data()
         if self.encoder.alpha_mode:
             switch = False
             square_size = self.scaling_factor
