@@ -102,10 +102,12 @@ class RectConverter:
         It returns the best rectangles and colors based on the number of rectangles.
         """
         def get_index_list():
-            if self.app.palette_path == None:
-                return self.encoder.unique_colors
+            color_count = self.encoder.img.getcolors()
+            color_count = {color[1][:3]: color[0] for color in color_count}
+            if self.app.palette_path is None:
+                return sorted(list(range(len(self.encoder.unique_colors))), key=lambda e: color_count[self.encoder.unique_colors[e]], reverse=True)[:10]
             else:
-                return [k for k, v in enumerate(self.encoder.palette_unique_colors) if v in self.encoder.unique_colors]
+                return sorted([k for k, v in enumerate(self.encoder.palette_unique_colors) if v in self.encoder.unique_colors], key=lambda e: color_count[self.encoder.palette_unique_colors[e]], reverse=True)[:10]
         
 
         self._get_binary_image()
@@ -116,7 +118,8 @@ class RectConverter:
         else:
             best_rectangles = []
             best_rectangles_count = float("inf")
-            for i in range(min(len(get_index_list()), 10)):
+            print(get_index_list())
+            for i in get_index_list():
                 self._get_rectangles(i)
                 self._merge_rectangles()
                 if len(self.rectangles) < best_rectangles_count:

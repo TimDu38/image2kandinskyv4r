@@ -114,11 +114,6 @@ class App(tk.Tk):
         else:
             self.reset_palette()
 
-
-    def preview_image(self):
-        """Preview the selected image by calling the convert_image method with "preview" mode."""
-        self.convert_image("preview")
-    
     
     def convert_image(self, mode=None):
         """Convert the selected image to rectangles and display them in the preview canvas.
@@ -139,7 +134,7 @@ class App(tk.Tk):
             except IOError:
                 messagebox.showerror("Error", "Cannot open image. Please check the file path.")
                 return
-            except Exception as e:
+            #except Exception as e:
                 messagebox.showerror("Error", e)
                 return
         else:
