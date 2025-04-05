@@ -9,7 +9,8 @@ src/__pycache__/
 src/decoders/__pycache__/
 __pycache__/
 # Ignore a specific Python file
-src/decoders/draw_test.py
+src/decoders/~raw_draw_test.py
+src/decoders/~hex_draw_test.py
 
 # Ignore the data.py file
 data.py
