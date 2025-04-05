@@ -80,7 +80,6 @@ class Encoder:
         if colors is None:
             raise ValueError("Palette has too many colors")
         unique_colors = []
-        self.alpha_mode = False
         for color in colors:
             if color[1][3] > 127:  # Check if the pixel is not transparent
                 if color[1][:3] not in unique_colors:
@@ -88,35 +87,6 @@ class Encoder:
         unique_colors.sort(key= lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
         self.palette_unique_colors = unique_colors
 
-    
-    def _write_data(self):
-        """Write the rectangles and colors to a Python file.
-        Raises:
-            IOError: If the file cannot be written.
-            Exception: If an error occurs while writing data to the file.
-        """
-        def get_color_list():
-            return self.unique_colors if self.app.palette_path is None else self.palette_unique_colors
-
-        with open("data.py", "w") as f:
-            f.write(f"colors=[")
-            for i in get_color_list():
-                f_string = "("
-                for j in i:
-                    f_string += f"{j},"
-                f_string = f_string[:-1]
-                f_string += "),"
-                f.write(f_string)
-            f.write("]\n")
-            f.write("rectangles = [")
-            for i in self.rectangles:
-                f_string = "("
-                for j in i:
-                    f_string += f"{j},"
-                f_string = f_string[:-1]
-                f_string += "),"
-                f.write(f_string)
-            f.write("]\n ")
 
     def encode(self):
         """Encode the image into rectangles and colors.

@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, filedialog
 from encoder import Encoder
 from ui_previewer import Previewer
+from file_writer import FileWriter
 
 
 class App(tk.Tk):
@@ -23,6 +24,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.encoder = Encoder(self)
+        self.file_writer = FileWriter(self)
         self.file_path = None
         self.palette_path = None
         self.configure_root()
@@ -66,8 +68,24 @@ class App(tk.Tk):
         self.preview_button = tk.Button(button_frame, text="Preview", command=lambda: self.convert_image("preview"), bg="#FF9800", fg="white")
         self.preview_button.pack(padx=5, side=tk.LEFT)
 
-        self.convert_button = tk.Button(button_frame, text="Convert", command=self.convert_image, bg="#2196F3", fg="white")
-        self.convert_button.pack(padx=5, side=tk.LEFT)
+        self.convert_button = tk.Button(button_frame, text="Convert (Raw)", command=self.convert_image, bg="#2196F3", fg="white")
+        self.convert_button.pack(padx=(5, 0), side=tk.LEFT)
+
+        self.convert_type_menu = tk.Menu(button_frame, tearoff=0, bg="#444444", fg="white")
+        for mode_name in ["Raw", "Hex"]:
+            self.convert_type_menu.add_command(label=mode_name, command=lambda m=mode_name: (self.file_writer.set_mode(m.lower()), self.convert_button.config(text=f"Convert ({m})")))
+
+
+
+        def show_menu(event):
+            self.dropdown_btn.config(relief="sunken", bg="#FFFFFF", fg="black")
+            self.convert_type_menu.post(event.x_root, event.y_root)
+            self.dropdown_btn.config(relief="raised", bg="#2196F3", fg="white")
+
+
+        self.dropdown_btn = tk.Label(button_frame, text="▼", bg="#2196F3", fg="white", cursor="hand2", relief="raised",bd=2)
+        self.dropdown_btn.pack(padx=(0, 5), side=tk.LEFT, ipady=2) # Its a pixel too small at the bottom and i hate it but im clueless on how to fix it
+        self.dropdown_btn.bind("<Button-1>", show_menu)
 
         self.quit_button = tk.Button(button_frame, text="Quit", command=self.on_closing, bg="#F44336", fg="white")
         self.quit_button.pack(padx=5, side=tk.LEFT)
@@ -129,12 +147,12 @@ class App(tk.Tk):
                     self.encoder.encode()
                     self.canvas.load_data()
                 if mode != "preview":
-                    self.encoder._write_data()
-                    messagebox.showinfo("Success", "Image converted successfully!")
-
+                    self.file_writer.write()
+                    messagebox.showinfo("Success", f"Image converted successfully! ({self.file_writer.mode}) \n Character count: {self.file_writer.get_char_count()}")
+                    if not self.encoder.converted_flag:
+                        self.canvas.enable()
                 else:
                     self.canvas.enable()
-
                 self.encoder.converted_flag = True
 
             except ValueError as e:

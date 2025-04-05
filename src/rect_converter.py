@@ -1,3 +1,4 @@
+import time
 class RectConverter:
     """Class to convert an image to rectangles.
     It handles the conversion of binary images to rectangles and manages the merging of rectangles.
@@ -102,7 +103,7 @@ class RectConverter:
         It returns the best rectangles and colors based on the number of rectangles.
         """
         def get_index_list():
-            color_count = self.encoder.img.getcolors()
+            color_count = self.encoder.img.getcolors(maxcolors=262144)
             color_count = {color[1][:3]: color[0] for color in color_count}
             if self.app.palette_path is None:
                 return sorted(list(range(len(self.encoder.unique_colors))), key=lambda e: color_count[self.encoder.unique_colors[e]], reverse=True)[:10]
@@ -118,12 +119,15 @@ class RectConverter:
         else:
             best_rectangles = []
             best_rectangles_count = float("inf")
+            t1 = time.time()
             for i in get_index_list():
                 self._get_rectangles(i)
                 self._merge_rectangles()
                 if len(self.rectangles) < best_rectangles_count:
                     best_rectangles = self.rectangles.copy()
                     best_rectangles_count = len(self.rectangles)
+                if time.time() - t1 > 10:
+                    break
             self.encoder.rectangles = best_rectangles.copy()
     
 
