@@ -149,7 +149,7 @@ class App(tk.Tk):
                 if mode != "preview":
                     self.file_writer.write()
                     messagebox.showinfo("Success", f"Image converted successfully! ({self.file_writer.mode}) \n Character count: {self.file_writer.get_char_count()}")
-                    if not self.encoder.converted_flag:
+                    if not self.encoder.converted_flag and self.canvas.frame == 0:
                         self.canvas.enable()
                 else:
                     self.canvas.enable()
