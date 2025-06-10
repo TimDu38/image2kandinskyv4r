@@ -53,6 +53,38 @@ class Encoder:
     def _open_palette_image(self):
         self._open_image(self.app.palette_path, "palette_img")
 
+    @staticmethod
+    def _rgb888_to_rgb565(rgb):
+        """Convert RGB888 color to RGB565 format.
+        
+        Args:
+            rgb (tuple): A tuple representing the RGB color (R, G, B).
+        
+        Returns:
+            tuple: The RGB565 representation of the color.
+        """
+        r, g, b = rgb
+        r = ( r *  31 + 127) // 255
+        g = ( g *  63 + 127) // 255
+        b = ( b *  31 + 127) // 255
+        return (r, g, b)
+    
+    @staticmethod
+    def _rgb565_to_rgb888(rgb565):
+        """Convert RGB565 color to RGB888 format.
+        
+        Args:
+            rgb565 (tuple): A tuple representing the RGB565 color (R, G, B).
+        
+        Returns:
+            tuple: The RGB888 representation of the color.
+        """
+        r, g, b = rgb565
+        r = (r * 255 + 15) // 31
+        g = (g * 255 + 31) // 63
+        b = (b * 255 + 15) // 31
+        return (r, g, b)
+
     
     def _get_colors(self):
         """Get unique colors from the image.
@@ -60,31 +92,35 @@ class Encoder:
             ValueError: If the image has too many colors or if the image is not in RGBA format.
         """
 
-        colors = self.img.getcolors()
-        if colors is None:
-            raise ValueError("Image has too many colors")
+        colors = self.img.getcolors(maxcolors=2**16)
         unique_colors = []
-        self.alpha_mode = False
+        alpha_mode = False
         for color in colors:
             if color[1][3] > 127:  # Check if the pixel is not transparent
-                if color[1][:3] not in unique_colors:
-                    unique_colors.append(color[1][:3])
+                reduced_color = self._rgb888_to_rgb565(color[1][:3])
+                if reduced_color not in unique_colors:
+                    unique_colors.append(reduced_color)
+                    if len(unique_colors) > 1024:
+                        raise ValueError("Image has too many colors (max 1024)")
             else:
-                self.alpha_mode = True
+                alpha_mode = True
 
         unique_colors.sort(key=lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
         self.unique_colors = unique_colors
+        self.alpha_mode = alpha_mode
     
     def _get_palette_colors(self):
-        colors = self.palette_img.getcolors()
-        if colors is None:
-            raise ValueError("Palette has too many colors")
+        colors = self.palette_img.getcolors(maxcolors=2**16)
         unique_colors = []
         for color in colors:
             if color[1][3] > 127:  # Check if the pixel is not transparent
-                if color[1][:3] not in unique_colors:
-                    unique_colors.append(color[1][:3])
+                reduced_color = self._rgb888_to_rgb565(color[1][:3])
+                if reduced_color not in unique_colors:
+                    unique_colors.append(reduced_color)
+                    if len(unique_colors) > 1024:
+                        raise ValueError("Palette has too many colors (max 1024)")
         unique_colors.sort(key= lambda e: e[0] * 256 ** 2 + e[1] * 256 + e[2])
+
         self.palette_unique_colors = unique_colors
 
 

@@ -23,10 +23,10 @@ class RectConverter:
         """Get the binary image representation of the image.
         """
         if self.app.palette_path is None:
-            self.binary_image = [self.encoder.unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
+            self.binary_image = [self.encoder.unique_colors.index(self.encoder._rgb888_to_rgb565(i[:3])) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
         else:
             try:
-                self.binary_image = [self.encoder.palette_unique_colors.index(i[:3]) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
+                self.binary_image = [self.encoder.palette_unique_colors.index(self.encoder._rgb888_to_rgb565(i[:3])) if i[3] > 127 else -1 for i in list(self.encoder.img.getdata())]
             except ValueError:
                 raise Exception("This image contains color(s) that are not in the loaded palette. \n Please load a compatible image with the palette, or unload the palette.")
             
@@ -103,7 +103,8 @@ class RectConverter:
         It returns the best rectangles and colors based on the number of rectangles.
         """
         def get_index_list():
-            color_count = self.encoder.img.getcolors(maxcolors=262144)
+            color_count = self.encoder.img.getcolors(maxcolors=2**16)
+            color_count = [(color[0], self.encoder._rgb888_to_rgb565(color[1][:3])) for color in color_count]
             color_count = {color[1][:3]: color[0] for color in color_count}
             if self.app.palette_path is None:
                 return sorted(list(range(len(self.encoder.unique_colors))), key=lambda e: color_count[self.encoder.unique_colors[e]], reverse=True)[:10]

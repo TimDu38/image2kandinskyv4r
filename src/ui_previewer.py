@@ -85,7 +85,8 @@ class Previewer(tk.Canvas):
                 y2 = y + h + self.offset[1]
                 x += self.offset[0]
                 y += self.offset[1]
-                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(self.colors_list[c]), outline="")
+                color = self.encoder._rgb565_to_rgb888(self.colors_list[c])
+                self.create_rectangle(x, y, x2, y2, fill=self.convert_to_hex(color), outline="")
                 self.frame += 1
                 scale_text = f" (x{self.scaling_factor} scaled)" if self.scaling_factor != 1 else ""
                 self.parent.rectangle_count_label.config(text=f"Rectangles count: {self.frame}/{self.rectangles_count} | Colors: {self.colors_count} | Size: {self.img_size[0]}x{self.img_size[1]}{scale_text}")

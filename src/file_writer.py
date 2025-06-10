@@ -17,8 +17,9 @@ class FileWriter():
 
     def write(self):
 
-        def get_color_list():
-            return self.encoder.unique_colors if self.app.palette_path is None else self.encoder.palette_unique_colors
+        def get_color_list(rescale=True):
+            color_lst = self.encoder.unique_colors if self.app.palette_path is None else self.encoder.palette_unique_colors
+            return color_lst if not rescale else [self.encoder._rgb565_to_rgb888(color) for color in color_lst]
         
         def get_rectangles():
             if self.encoder.alpha_mode:
@@ -49,12 +50,12 @@ class FileWriter():
             last_x, last_y, last_xs, last_ys, last_color = 0, 0, 0, 0, -1
             for rect in get_rectangles_2():
                 x, y, xs, ys, color = rect[0], rect[1], rect[2], rect[3], rect[4]
-                dx, dy, dxs, dys = x - last_x, y - last_y, xs - last_xs, ys - last_ys
+                dx, dy = x - last_x, y - last_y,
                 if color != last_color:
-                    deltas.append((dx, dy, dxs, dys, color))
+                    deltas.append((dx, dy, xs, ys, color))
                 else:
-                    deltas.append((dx, dy, dxs, dys))
-                last_x, last_y, last_xs, last_ys, last_color = x, y, xs, ys, color
+                    deltas.append((dx, dy, xs, ys))
+                last_x, last_y, last_color = x, y, color
             return deltas   
 
 
