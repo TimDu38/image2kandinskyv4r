@@ -43,8 +43,22 @@ class FileWriter():
                     self.encoder.rectangles[1:],
                     key=lambda e: (e[4], e[0], e[1], e[2], e[3])
                 )
+            
+        def get_deltas():
+            deltas = []
+            last_x, last_y, last_xs, last_ys, last_color = 0, 0, 0, 0, -1
+            for rect in get_rectangles_2():
+                x, y, xs, ys, color = rect[0], rect[1], rect[2], rect[3], rect[4]
+                dx, dy, dxs, dys = x - last_x, y - last_y, xs - last_xs, ys - last_ys
+                if color != last_color:
+                    deltas.append((dx, dy, dxs, dys, color))
+                else:
+                    deltas.append((dx, dy, dxs, dys))
+                last_x, last_y, last_xs, last_ys, last_color = x, y, xs, ys, color
+            return deltas   
 
-        if self.mode == "raw":
+
+        if self.mode in ["raw", "raw+"]:
             with open("data.py", "w") as f:
                 f.write(f"colors=[")
                 for i in get_color_list():
@@ -56,7 +70,8 @@ class FileWriter():
                     f.write(f_string)
                 f.write("]\n")
                 f.write("rectangles = [")
-                for i in get_rectangles():
+                rectangles = get_rectangles() if self.mode == "raw" else get_deltas()
+                for i in rectangles:
                     f_string = "("
                     for j in i:
                         f_string += f"{j},"
@@ -87,37 +102,4 @@ class FileWriter():
                     hex_string += f"{i[0]:02x}{i[1]:02x}{i[2]:02x}{i[3]:02x}"
                 f.write(hex_string)
                 f.write("'\n")
-
-        elif self.mode == "raw+":
-            def get_deltas():
-                deltas = []
-                last_x, last_y, last_xs, last_ys, last_color = 0, 0, 0, 0, -1
-                for rect in get_rectangles_2():
-                    x, y, xs, ys, color = rect[0], rect[1], rect[2], rect[3], rect[4]
-                    dx, dy, dxs, dys = x - last_x, y - last_y, xs - last_xs, ys - last_ys
-                    if color != last_color:
-                        deltas.append((dx, dy, dxs, dys, color))
-                    else:
-                        deltas.append((dx, dy, dxs, dys))
-                    last_x, last_y, last_xs, last_ys, last_color = x, y, xs, ys, color
-                return deltas    
-            with open("data.py", "w") as f:
-                f.write(f"colors=[")
-                for i in get_color_list():
-                    f_string = "("
-                    for j in i:
-                        f_string += f"{j},"
-                    f_string = f_string[:-1]
-                    f_string += "),"
-                    f.write(f_string)
-                f.write("]\n")
-                f.write("rectangles = [")
-                for i in get_deltas():
-                    f_string = "("
-                    for j in i:
-                        f_string += f"{j},"
-                    f_string = f_string[:-1]
-                    f_string += "),"
-                    f.write(f_string)
-                f.write("]\n ")
                     
