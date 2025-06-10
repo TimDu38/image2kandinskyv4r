@@ -72,7 +72,7 @@ class App(tk.Tk):
         self.convert_button.pack(padx=(5, 0), side=tk.LEFT)
 
         self.convert_type_menu = tk.Menu(button_frame, tearoff=0, bg="#444444", fg="white")
-        for mode_name in ["Raw", "Hex"]:
+        for mode_name in ["Raw", "Raw+", "Hex"]:
             self.convert_type_menu.add_command(label=mode_name, command=lambda m=mode_name: (self.file_writer.set_mode(m.lower()), self.convert_button.config(text=f"Convert ({m})")))
 
 
