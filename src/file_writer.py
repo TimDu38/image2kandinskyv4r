@@ -45,17 +45,24 @@ class FileWriter():
                     key=lambda e: (e[4], e[0], e[1], e[2], e[3])
                 )
             
-        def get_deltas():
+        def get_deltas(second_mode=False):
             deltas = []
-            last_x, last_y, last_xs, last_ys, last_color = 0, 0, 0, 0, -1
+            last_x, last_y, last_color = 0, 0, 0
             for rect in get_rectangles_2():
                 x, y, xs, ys, color = rect[0], rect[1], rect[2], rect[3], rect[4]
-                dx, dy = x - last_x, y - last_y,
-                if color != last_color:
-                    deltas.append((dx, dy, xs, ys, color))
+                dx, dy, dcolor = x - last_x, y - last_y, color - last_color
+                if second_mode:
+                    if dx < 0: # if negative, write the absolute value instead of delta and add 1M (to flag it later) (its fucking stupid, but works)
+                        dx = x + 1_000_000 # use a large value to indicate absolute position
+                    if dy < 0:
+                        dy = y + 1_000_000 # use a large value to indicate absolute position 
+                    if dcolor < 0:
+                        dcolor = color + 1_000_000 # use a large value to indicate absolute position
+                if dcolor != 0:
+                    deltas.append((dx, dy, xs, ys, dcolor))
                 else:
                     deltas.append((dx, dy, xs, ys))
-                last_x, last_y, last_color = x, y, color
+                last_x, last_y, last_color = x % 1_000_000, y % 1_000_000, color % 1_000_000
             return deltas   
 
 
@@ -83,9 +90,9 @@ class FileWriter():
         
         elif self.mode == "hex":
             for i in self.encoder.rectangles:
-                for j in i[:4]:
+                for j in i:
                     if j >= 255:
-                        raise ValueError("Maximum image size for hex mode is 254x254")
+                        raise ValueError("Maximum image size/unique colors count for hex mode is 254x254 / 255 colors")
             with open("data.py", "w") as f:
                 f.write(f"colors='")
                 hex_string = ""
@@ -103,4 +110,38 @@ class FileWriter():
                     hex_string += f"{i[0]:02x}{i[1]:02x}{i[2]:02x}{i[3]:02x}"
                 f.write(hex_string)
                 f.write("'\n")
-                    
+        
+        elif self.mode == "string":
+            def convert_value_to_string(value):
+                if value >= 1_000_000: # if value is equal or larger than 1E6, it is an absolute position
+                    value -= 1_000_000 # no way you can write numbers with underscores i learned ts only now
+                    reset_track_flag = "!"
+                else:
+                    reset_track_flag = ""
+                if abs(value) > 1023 :
+                    print(value)
+                    raise ValueError("Maximum image size/ unique colors counts for string mode is 1023x1023 / 1023 colors")
+                msb = value // 64
+                lsb = value % 64
+                if msb == 0:
+                    return reset_track_flag + chr(lsb + 35)
+                else:
+                    return reset_track_flag + chr(msb + 104) + chr(lsb + 35)
+            
+            with open("data.py", "w") as f:
+                f.write(f'colors=r"')
+                color_list_string = ""
+                for i in get_color_list(rescale=False):
+                    for j in i:
+                        color_list_string += convert_value_to_string(j)
+                f.write(color_list_string)
+                f.write('"\nrectangles=r"')
+                rectangles = get_deltas(second_mode=True)
+                rectangles_string = ""
+                for rect in rectangles:
+                    for k, j in enumerate(rect):
+                        if k == 4:
+                            rectangles_string += " " # special character for color index change
+                        rectangles_string += convert_value_to_string(j)
+                f.write(rectangles_string)
+                f.write('"\n')

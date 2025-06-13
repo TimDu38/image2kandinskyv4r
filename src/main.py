@@ -49,7 +49,7 @@ class App(tk.Tk):
         self.image_label = tk.Label(self, text="Preview", font=("Arial", 16, "bold"), bg="#444444", fg="white")
         self.image_label.pack(pady=5)
 
-        self.canvas = Previewer(self, width=256, height=224, bg="#000000", highlightthickness=2, highlightbackground="#FFFFFF")
+        self.canvas = Previewer(self, width=320, height=224, bg="#000000", highlightthickness=2, highlightbackground="#FFFFFF")
         self.canvas.pack()
 
         self.rectangle_count_label = tk.Label(self, text="Rectangles count: - | Colors - | Size: -", font=("Arial", 11, "bold"), bg="#444444", fg="white")
@@ -72,7 +72,7 @@ class App(tk.Tk):
         self.convert_button.pack(padx=(5, 0), side=tk.LEFT)
 
         self.convert_type_menu = tk.Menu(button_frame, tearoff=0, bg="#444444", fg="white")
-        for mode_name in ["Raw", "Raw+", "Hex"]:
+        for mode_name in ["Raw", "Raw+", "Hex", "String"]:
             self.convert_type_menu.add_command(label=mode_name, command=lambda m=mode_name: (self.file_writer.set_mode(m.lower()), self.convert_button.config(text=f"Convert ({m})")))
 
 

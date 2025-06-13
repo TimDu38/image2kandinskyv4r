@@ -44,11 +44,11 @@ class Previewer(tk.Canvas):
         self.rectangles_list = list(set(self.encoder.rectangles.copy())) if self.parent.encoder.alpha_mode else [self.encoder.rectangles[0]] + list(set(self.encoder.rectangles.copy()[1:]))
         self.rectangles_count = len(self.rectangles_list)
         self.cooldown = 5 / self.rectangles_count
-        self.scaling_factor = max(math.floor(min(256 / self.encoder.size[0], 224 / self.encoder.size[1])),1)
+        self.scaling_factor = max(math.floor(min(320 / self.encoder.size[0], 224 / self.encoder.size[1])),1)
         self.img_size = self.encoder.size
         self.colors_list = self.encoder.unique_colors.copy() if self.parent.palette_path is None else self.encoder.palette_unique_colors.copy()
         self.colors_count = len(self.encoder.unique_colors)
-        self.offset = (256 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
+        self.offset = (320 - self.img_size[0] * self.scaling_factor) // 2, (224 - self.img_size[1] * self.scaling_factor) // 2
         self.config(highlightbackground="#000000")
         self.config(bg="#222222")
 
