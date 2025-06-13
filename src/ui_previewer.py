@@ -65,11 +65,12 @@ class Previewer(tk.Canvas):
             switch = False
             square_size = self.scaling_factor
             for y in range(self.offset[1], self.img_size[1] * self.scaling_factor + self.offset[1], square_size):
+                initial_x_state = switch
                 for x in range(self.offset[0], self.img_size[0] * self.scaling_factor + self.offset[0], square_size):
                     color = "#BFBFBF" if switch else "#808080"
                     self.create_rectangle(x, y, x + square_size, y + square_size, fill=color, outline="")
                     switch = not switch
-                switch = not switch
+                switch = not initial_x_state
     
 
     def step_render_rectangles(self):

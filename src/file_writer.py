@@ -65,6 +65,18 @@ class FileWriter():
                 last_x, last_y, last_color = x % 1_000_000, y % 1_000_000, color % 1_000_000
             return deltas   
 
+        def convert_value_to_string(value):
+            if value >= 1_000_000: # if value is equal or larger than 1E6, it is an absolute position
+                value -= 1_000_000 # no way you can write numbers with underscores i learned ts only now
+                reset_track_flag = "!"
+            else:
+                reset_track_flag = ""
+            msb = value // 64
+            lsb = value % 64
+            if msb == 0:
+                return reset_track_flag + chr(lsb + 35)
+            else:
+                return reset_track_flag + chr(msb + 104) + chr(lsb + 35)
 
         if self.mode in ["raw", "raw+"]:
             with open("data.py", "w") as f:
@@ -112,21 +124,11 @@ class FileWriter():
                 f.write("'\n")
         
         elif self.mode == "string":
-            def convert_value_to_string(value):
-                if value >= 1_000_000: # if value is equal or larger than 1E6, it is an absolute position
-                    value -= 1_000_000 # no way you can write numbers with underscores i learned ts only now
-                    reset_track_flag = "!"
-                else:
-                    reset_track_flag = ""
-                if abs(value) > 1023 :
-                    print(value)
-                    raise ValueError("Maximum image size/ unique colors counts for string mode is 1023x1023 / 1023 colors")
-                msb = value // 64
-                lsb = value % 64
-                if msb == 0:
-                    return reset_track_flag + chr(lsb + 35)
-                else:
-                    return reset_track_flag + chr(msb + 104) + chr(lsb + 35)
+            
+            for i in self.encoder.rectangles:
+                for j in i:
+                    if j >= 1024:
+                        raise ValueError("Maximum image size/unique colors count for string mode is 1023x1023 / 1024 colors")
             
             with open("data.py", "w") as f:
                 f.write(f'colors=r"')
@@ -145,3 +147,36 @@ class FileWriter():
                         rectangles_string += convert_value_to_string(j)
                 f.write(rectangles_string)
                 f.write('"\n')
+
+        elif self.mode == "string mini":
+            for i in self.encoder.rectangles:
+                for j in i:
+                    if j >= 92:
+                        raise ValueError("Maximum image size/unique colors count for string mini mode is 91x91 / 92 colors")
+            with open("data.py", "w") as f:
+                f.write(f'colors=r"')
+                color_list_string = ""
+                for i in get_color_list(rescale=False):
+                    for j in i:
+                        color_list_string += convert_value_to_string(j)
+                f.write(color_list_string)
+                f.write('"\nrectangles=r"')
+                rectangles = get_rectangles_2()
+                new_rectangles = []
+                last_color = -1
+                for rect in rectangles:
+                    if rect[4] != last_color:
+                        last_color = rect[4]
+                        new_rectangles.append((rect[0], rect[1], rect[2], rect[3], last_color))
+                    else:
+                        new_rectangles.append((rect[0], rect[1], rect[2], rect[3]))
+
+                rectangles_string = ""
+                for rect in new_rectangles:
+                    for k, j in enumerate(rect):
+                        if k == 4:
+                            rectangles_string += " "
+                        rectangles_string += convert_value_to_string(j)
+                f.write(rectangles_string)
+                f.write('"\n')
+
