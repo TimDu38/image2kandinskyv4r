@@ -1,6 +1,9 @@
 from kandinsky import fill_rect
 
 def show_image(palette_hex, rectangles_hex, pos=(0, 0)):
+    pal = palette_hex
+    draw = fill_rect
+    px, py = pos
     i = 0
     block_size = 96
     while i < len(rectangles_hex):
@@ -12,7 +15,7 @@ def show_image(palette_hex, rectangles_hex, pos=(0, 0)):
             if (rect >> 24) == 0xFF:
                 color_index = (rect >> 16) & 0xFF
                 color_start = color_index * 6
-                color_hex = palette_hex[color_start:color_start + 6]
+                color_hex = pal[color_start:color_start + 6]
                 current_color = tuple(int(color_hex[j:j+2], 16) for j in (0, 2, 4))
                 bits -= 16
                 i += 4
@@ -21,6 +24,6 @@ def show_image(palette_hex, rectangles_hex, pos=(0, 0)):
                 y = rect >> 16 & 0xFF
                 w = rect >> 8 & 0xFF
                 h = rect & 0xFF
-                fill_rect(pos[0] + x, pos[1] + y, w, h, current_color)
+                draw(px + x, py + y, w, h, current_color)
                 bits -= 32
                 i += 8
