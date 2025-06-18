@@ -41,8 +41,6 @@ class RectConverter:
             bg_color_index (int) : the color index of the background in self.unique_colors
         """
         self.rectangles = []
-        if not self.encoder.alpha_mode:
-            self.rectangles.append((0, 0, self.encoder.size[0], self.encoder.size[1], bg_index))
         used_pixels = [[0 for _ in range(self.encoder.size[0])] for _ in range(self.encoder.size[1])]
         for i in range(self.encoder.size[1]):
             for j in range(self.encoder.size[0]):
