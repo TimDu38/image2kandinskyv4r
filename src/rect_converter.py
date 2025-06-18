@@ -102,14 +102,21 @@ class RectConverter:
         This method tries to convert the image to rectangles with and without swapping colors.
         It returns the best rectangles and colors based on the number of rectangles.
         """
-        def get_index_list():
-            color_count = self.encoder.img.getcolors(maxcolors=2**16)
-            color_count = [(color[0], self.encoder._rgb888_to_rgb565(color[1][:3])) for color in color_count]
-            color_count = {color[1][:3]: color[0] for color in color_count}
-            if self.app.palette_path is None:
-                return sorted(list(range(len(self.encoder.unique_colors))), key=lambda e: color_count[self.encoder.unique_colors[e]], reverse=True)[:10]
-            else:
-                return sorted([k for k, v in enumerate(self.encoder.palette_unique_colors) if v in self.encoder.unique_colors], key=lambda e: color_count[self.encoder.palette_unique_colors[e]], reverse=True)[:10]
+        def get_bg_index(rectangles):
+            colors = {}
+            for i in rectangles:
+                if i[4] not in colors:
+                    colors[i[4]] = 1
+                colors[i[4]] += 1
+            bg_index = max(colors, key=colors.get)
+            return bg_index
+        
+        def add_bg_rectangle(rectangles, bg_index):
+            new_rectangles = [(0, 0, self.encoder.size[0], self.encoder.size[1], bg_index)]
+            for i in rectangles:
+                if i[4] != bg_index:
+                    new_rectangles.append(i)
+            return new_rectangles
         
 
         self._get_binary_image()
@@ -118,18 +125,11 @@ class RectConverter:
             self._merge_rectangles()
             self.encoder.rectangles = self.rectangles.copy()
         else:
-            best_rectangles = []
-            best_rectangles_count = float("inf")
-            t1 = time.time()
-            for i in get_index_list():
-                self._get_rectangles(i)
-                self._merge_rectangles()
-                if len(self.rectangles) < best_rectangles_count:
-                    best_rectangles = self.rectangles.copy()
-                    best_rectangles_count = len(self.rectangles)
-                if time.time() - t1 > 10:
-                    break
-            self.encoder.rectangles = best_rectangles.copy()
+            self._get_rectangles()
+            self._merge_rectangles()
+            bg_index = get_bg_index(self.rectangles)
+            self.rectangles = add_bg_rectangle(self.rectangles, bg_index)
+            self.encoder.rectangles = self.rectangles.copy()
     
 
 
