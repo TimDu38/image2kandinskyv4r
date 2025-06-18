@@ -65,10 +65,11 @@ class RectConverter:
         while not merged_all:
             merged_all = True
             merged_rectangles = []
-            for i in self.rectangles:
-                for j in self.rectangles:
-                    if len(i) > 4 and len(j) > 4:
-                        if i[0] == j[0] and i[2] == j[2] and i[4] == j[4] and not i == j and not i in destroyed and not j in destroyed:
+            for i_index in range(len(self.rectangles)):
+                i = self.rectangles[i_index]
+                for j_index in range(i_index + 1, len(self.rectangles)):
+                        j = self.rectangles[j_index]
+                        if i[0] == j[0] and i[2] == j[2] and i[4] == j[4] and not i in destroyed and not j in destroyed:
                             tobe_merged = True
                             for k in range(min(i[1], j[1]), max(i[1],j[1])):
                                 if not all(pixel == i[4] for pixel in self.binary_image[k][i[0]:i[0]+i[2]]):
@@ -79,7 +80,7 @@ class RectConverter:
                                 destroyed.append(i)
                                 destroyed.append(j)
                                 merged_all = False
-                        elif i[1] == j[1] and i[3] == j[3] and i[4] == j[4] and not i == j and not i in destroyed and not j in destroyed:
+                        elif i[1] == j[1] and i[3] == j[3] and i[4] == j[4] and not i in destroyed and not j in destroyed:
                             tobe_merged = True
                             for k in range(min(i[0], j[0]), max(i[0],j[0])):
                                 if not all(row[k] == i[4] for row in self.binary_image[i[1]:i[1]+i[3]]):
@@ -123,11 +124,17 @@ class RectConverter:
             self._merge_rectangles()
             self.encoder.rectangles = self.rectangles.copy()
         else:
+            t1 = time.time()
             self._get_rectangles()
+            #print(f"First pass took {time.time() - t1:.2f} seconds")
+            t1 = time.time()
             self._merge_rectangles()
+            #print(f"Second pass took {time.time() - t1:.2f} seconds")
+            t1 = time.time()
             bg_index = get_bg_index(self.rectangles)
             self.rectangles = add_bg_rectangle(self.rectangles, bg_index)
             self.encoder.rectangles = self.rectangles.copy()
+            #print(f"Third pass took {time.time() - t1:.2f} seconds")
     
 
 
