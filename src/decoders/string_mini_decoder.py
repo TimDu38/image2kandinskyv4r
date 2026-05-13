@@ -1,7 +1,7 @@
 from kandinsky import fill_rect
-def show_image(pal,rects,pos=(0,0)):
+def show_image(pal,rects,pos=(0,0),s=1):
  d=fill_rect;o=ord;p=pal
- f,x,y,w,h,c=4,0,0,0,0,(0,0,0)
+ f,x,y,w,h,c=0,0,0,0,0,(0,0,0)
  a,b=pos;a-=35;b-=35
  for i in rects:
   v=o(i)
@@ -15,4 +15,6 @@ def show_image(pal,rects,pos=(0,0)):
    q=v*3-105
    z=p[q:q+3]
    c=((o(z[0])*255-8910)//31,(o(z[1])*255-8894)//63,(o(z[2])*255-8910)//31)
-   d(x+a,y+b,w-35,h-35,c);f=4
+   d(x+a,y+b,w-35,h-35,c);f=0;continue
+  if f==0:x=v;f=1;continue
+ if f==4:d(x+a,y+b,w-35,h-35,c)
