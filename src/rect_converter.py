@@ -61,6 +61,11 @@ class RectConverter:
         This method checks for rectangles that can be merged based on their positions and dimensions."
         """
         def merge(rect_list):
+            if len(rect_list) > 5000:
+                print("Warning: Merging step skipped to avoid long processing time. Please consider using a smaller image or reducing the number of colors.")
+                return rect_list
+            if len(rect_list) > 2500:
+                print(f"Warning: Merging {len(rect_list)} rectangles may take a long time. Consider using a smaller image or reducing the number of colors.")
             merged_all = False
             destroyed = set()
             while not merged_all:
