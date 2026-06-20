@@ -4,7 +4,6 @@ class FileWriter():
         self.encoder = app.encoder
         self.mode = "raw"
 
-    
     def set_mode(self, mode):
         self.mode = mode
 
@@ -14,13 +13,16 @@ class FileWriter():
             data = f.read()
             return len(data)
 
-
     def write(self):
 
         def get_color_list(rescale=True):
-            color_lst = self.encoder.unique_colors if self.app.palette_path is None else self.encoder.palette_unique_colors
+            color_lst = (
+                self.encoder.unique_colors
+                if self.app.palette_path is None
+                else self.encoder.palette_unique_colors
+            )
             return color_lst if not rescale else [self.encoder._rgb565_to_rgb888(color) for color in color_lst]
-        
+
         def get_rectangles():
             if self.encoder.alpha_mode:
                 return sorted(
@@ -44,7 +46,7 @@ class FileWriter():
                     self.encoder.rectangles[1:],
                     key=lambda e: (e[4], e[0], e[1], e[2], e[3])
                 )
-            
+
         def get_deltas(second_mode=False):
             deltas = []
             last_x, last_y, last_color = 0, 0, 0
@@ -52,27 +54,31 @@ class FileWriter():
                 x, y, xs, ys, color = rect[0], rect[1], rect[2], rect[3], rect[4]
                 dx, dy, dcolor = x - last_x, y - last_y, color - last_color
                 if second_mode:
-                    if dx < 0: # if negative, write the absolute value instead of delta and add 1M (to flag it later) (its fucking stupid, but works)
-                        dx = x + 1_000_000 # use a large value to indicate absolute position
+                    if dx < 0:  # if negative, write the absolute value instead of delta and add 1M (to flag it later)
+                        dx = x + 1_000_000  # use a large value to indicate absolute position
                     if dy < 0:
-                        dy = y + 1_000_000 # use a large value to indicate absolute position 
+                        dy = y + 1_000_000  # use a large value to indicate absolute position
                     if dcolor < 0:
-                        dcolor = color + 1_000_000 # use a large value to indicate absolute position
+                        dcolor = color + 1_000_000  # use a large value to indicate absolute position
                 if dcolor != 0:
                     deltas.append((dx, dy, xs, ys, dcolor))
                 else:
                     deltas.append((dx, dy, xs, ys))
                 last_x, last_y, last_color = x % 1_000_000, y % 1_000_000, color % 1_000_000
-            return deltas   
+            return deltas
 
-        def convert_value_to_string(value):
-            if value >= 1_000_000: # if value is equal or larger than 1E6, it is an absolute position
-                value -= 1_000_000 # no way you can write numbers with underscores i learned ts only now
+        def convert_value_to_string(value, string_mini=False):
+            if value >= 1_000_000:  # if value is equal or larger than 1E6, it is an absolute position
+                value -= 1_000_000  # no way you can write numbers with underscores i learned ts only now
                 reset_track_flag = "!"
             else:
                 reset_track_flag = ""
-            msb = value // 64
-            lsb = value % 64
+            if string_mini:
+                msb = 0
+                lsb = value
+            else:
+                msb = value // 64
+                lsb = value % 64
             if msb == 0:
                 return reset_track_flag + chr(lsb + 35)
             else:
@@ -80,7 +86,7 @@ class FileWriter():
 
         if self.mode in ["raw", "raw+"]:
             with open("data.py", "w") as f:
-                f.write(f"colors=[")
+                f.write("colors=[")
                 for i in get_color_list():
                     f_string = "("
                     for j in i:
@@ -99,14 +105,14 @@ class FileWriter():
                     f_string += "),"
                     f.write(f_string)
                 f.write("]\n ")
-        
+
         elif self.mode == "hex":
             for i in self.encoder.rectangles:
                 for j in i:
                     if j >= 255:
                         raise ValueError("Maximum image size/unique colors count for hex mode is 254x254 / 255 colors")
             with open("data.py", "w") as f:
-                f.write(f"colors='")
+                f.write("colors='")
                 hex_string = ""
                 for i in get_color_list():
                     hex_string += f"{i[0]:02x}{i[1]:02x}{i[2]:02x}"
@@ -122,16 +128,19 @@ class FileWriter():
                     hex_string += f"{i[0]:02x}{i[1]:02x}{i[2]:02x}{i[3]:02x}"
                 f.write(hex_string)
                 f.write("'\n")
-        
+
         elif self.mode == "string":
-            
+
             for i in self.encoder.rectangles:
                 for j in i:
                     if j >= 1024:
-                        raise ValueError("Maximum image size/unique colors count for string mode is 1023x1023 / 1024 colors")
-            
+                        raise ValueError(
+                            "Maximum image size/unique colors count for string mode is "
+                            "1023x1023 / 1024 colors"
+                        )
+
             with open("data.py", "w") as f:
-                f.write(f'colors=r"')
+                f.write('colors=r"')
                 color_list_string = ""
                 for i in get_color_list(rescale=False):
                     for j in i:
@@ -143,7 +152,7 @@ class FileWriter():
                 for rect in rectangles:
                     for k, j in enumerate(rect):
                         if k == 4:
-                            rectangles_string += " " # special character for color index change
+                            rectangles_string += " "  # special character for color index change
                         rectangles_string += convert_value_to_string(j)
                 f.write(rectangles_string)
                 f.write('"\n')
@@ -152,13 +161,16 @@ class FileWriter():
             for i in self.encoder.rectangles:
                 for j in i:
                     if j >= 92:
-                        raise ValueError("Maximum image size/unique colors count for string mini mode is 91x91 / 92 colors")
+                        raise ValueError(
+                            "Maximum image size/unique colors count for string mini mode is "
+                            "91x91 / 92 colors"
+                        )
             with open("data.py", "w") as f:
-                f.write(f'colors=r"')
+                f.write('colors=r"')
                 color_list_string = ""
                 for i in get_color_list(rescale=False):
                     for j in i:
-                        color_list_string += convert_value_to_string(j)
+                        color_list_string += convert_value_to_string(j, string_mini=True)
                 f.write(color_list_string)
                 f.write('"\nrectangles=r"')
                 rectangles = get_rectangles_2()
@@ -176,7 +188,6 @@ class FileWriter():
                     for k, j in enumerate(rect):
                         if k == 4:
                             rectangles_string += " "
-                        rectangles_string += convert_value_to_string(j)
+                        rectangles_string += convert_value_to_string(j, string_mini=True)
                 f.write(rectangles_string)
                 f.write('"\n')
-

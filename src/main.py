@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox, filedialog
 from encoder import Encoder
 from ui_previewer import Previewer
@@ -43,32 +44,43 @@ class App(tk.Tk):
         """Create and place all widgets in the main window.
         This includes labels, buttons, and the preview canvas."""
 
-        self.title_label = tk.Label(self, text="Image to Numworks (V4r)", font=("Arial", 20, "bold"), bg="#444444", fg="white")
+        self.style = ttk.Style(self)
+        self.style.theme_use("default")
+        self.style.configure("TFrame", background="#444444")
+        self.style.configure("TLabel", background="#444444", foreground="white")
+
+        self.frame = ttk.Frame(self, style="TFrame")
+        self.frame.pack(fill="both", expand=True)
+
+        self.title_label = ttk.Label(self.frame, text="Image to Numworks (V4r)", font=("Arial", 20, "bold"), style="TLabel")
         self.title_label.pack(pady=5)
 
-        self.image_label = tk.Label(self, text="Preview", font=("Arial", 16, "bold"), bg="#444444", fg="white")
+        self.image_label = ttk.Label(self.frame, text="Preview", font=("Arial", 16, "bold"), style="TLabel")
         self.image_label.pack(pady=5)
 
-        self.canvas = Previewer(self, width=320, height=224, bg="#000000", highlightthickness=2, highlightbackground="#FFFFFF")
+        self.canvas = Previewer(self.frame,self,  width=320, height=224, bg="#000000", highlightthickness=2, highlightbackground="#FFFFFF")
         self.canvas.pack()
 
-        self.rectangle_count_label = tk.Label(self, text="Rectangles count: - | Colors - | Size: -", font=("Arial", 11, "bold"), bg="#444444", fg="white")
+        self.rectangle_count_label = ttk.Label(self.frame, text="Rectangles count: - | Colors - | Size: -", font=("Arial", 11, "bold"), style="TLabel")
         self.rectangle_count_label.pack()
 
-        self.file_path_label = tk.Label(self, text="No image selected", font=("Arial", 10, "bold"), bg="#444444", fg="white")
+        self.file_path_label = ttk.Label(self.frame, text="No image selected", font=("Arial", 10, "bold"), style="TLabel")
         self.file_path_label.pack(pady=5)
 
 
-        button_frame = tk.Frame(self, bg="#444444")
+        button_frame = ttk.Frame(self, style="TFrame")
         button_frame.pack(pady=5)
 
-        self.select_button = tk.Button(button_frame, text="Select Image", command=self.select_image, bg="#4CAF50", fg="white")
+        self.style.configure("select.TButton", background="#4CAF50", foreground="white")
+        self.select_button = ttk.Button(button_frame, text="Select Image", command=self.select_image, style="select.TButton")
         self.select_button.pack(padx=5, side=tk.LEFT)
 
-        self.preview_button = tk.Button(button_frame, text="Preview", command=lambda: self.convert_image("preview"), bg="#FF9800", fg="white")
+        self.style.configure("preview.TButton", background="#FF9800", foreground="white")
+        self.preview_button = ttk.Button(button_frame, text="Preview", command=lambda: self.convert_image("preview"), style="preview.TButton")
         self.preview_button.pack(padx=5, side=tk.LEFT)
 
-        self.convert_button = tk.Button(button_frame, text="Convert (Raw)", command=self.convert_image, bg="#2196F3", fg="white")
+        self.style.configure("convert.TButton", background="#2196F3", foreground="white")
+        self.convert_button = ttk.Button(button_frame, text="Convert (Raw)", command=self.convert_image, style="convert.TButton")
         self.convert_button.pack(padx=(5, 0), side=tk.LEFT)
 
         self.convert_type_menu = tk.Menu(button_frame, tearoff=0, bg="#444444", fg="white")
@@ -78,13 +90,13 @@ class App(tk.Tk):
 
 
         def show_menu(event):
-            self.dropdown_btn.config(relief="sunken", bg="#FFFFFF", fg="black")
+            self.dropdown_btn.config(relief="sunken", background="#FFFFFF", foreground="black")
             self.convert_type_menu.post(event.x_root, event.y_root)
-            self.dropdown_btn.config(relief="raised", bg="#2196F3", fg="white")
+            self.dropdown_btn.config(relief="raised", background="#2196F3", foreground="white")
 
-
-        self.dropdown_btn = tk.Label(button_frame, text="▼", bg="#2196F3", fg="white", cursor="hand2", relief="raised",bd=2)
-        self.dropdown_btn.pack(padx=(0, 5), side=tk.LEFT, ipady=2) # Its a pixel too small at the bottom and i hate it but im clueless on how to fix it
+        self.style.configure("dropdown.TLabel", background="#2196F3", foreground="white", bd=2, relief="raised", cursor="hand2")
+        self.dropdown_btn = ttk.Label(button_frame, text="▼", style="dropdown.TLabel")
+        self.dropdown_btn.pack(padx=(0, 5), side=tk.LEFT, ipady=4) # Its a pixel too small at the bottom and i hate it but im clueless on how to fix it
         self.dropdown_btn.bind("<Button-1>", show_menu)
 
         self.quit_button = tk.Button(button_frame, text="Quit", command=self.on_closing, bg="#F44336", fg="white")

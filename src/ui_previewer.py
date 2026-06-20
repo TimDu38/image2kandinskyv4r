@@ -17,10 +17,10 @@ class Previewer(tk.Canvas):
         timestamp (float): Timestamp for the last rendered frame.
         offset (tuple): Offset for positioning rectangles on the canvas.
     """
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, root, **kwargs):
         super().__init__(parent, **kwargs)
-        self.parent = parent
-        self.encoder = parent.encoder
+        self.parent = root
+        self.encoder = root.encoder
         self.rectangles_list = None
         self.rectangles_count = None
         self.img_size = None

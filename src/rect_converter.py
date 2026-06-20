@@ -60,39 +60,60 @@ class RectConverter:
         """Merge rectangles that are adjacent to each other.
         This method checks for rectangles that can be merged based on their positions and dimensions."
         """
-        merged_all = False
-        destroyed = []
-        while not merged_all:
-            merged_all = True
-            merged_rectangles = []
-            for i_index in range(len(self.rectangles)):
-                i = self.rectangles[i_index]
-                for j_index in range(i_index + 1, len(self.rectangles)):
-                        j = self.rectangles[j_index]
-                        if i[0] == j[0] and i[2] == j[2] and i[4] == j[4] and not i in destroyed and not j in destroyed:
-                            tobe_merged = True
-                            for k in range(min(i[1], j[1]), max(i[1],j[1])):
-                                if not all(pixel == i[4] for pixel in self.binary_image[k][i[0]:i[0]+i[2]]):
-                                    tobe_merged = False
-                                    break
-                            if tobe_merged:
-                                merged_rectangles.append((i[0], min(i[1], j[1]), i[2], max(i[1]+i[3],j[1]+j[3])-min(i[3], j[3]), i[4]))
-                                destroyed.append(i)
-                                destroyed.append(j)
-                                merged_all = False
-                        elif i[1] == j[1] and i[3] == j[3] and i[4] == j[4] and not i in destroyed and not j in destroyed:
-                            tobe_merged = True
-                            for k in range(min(i[0], j[0]), max(i[0],j[0])):
-                                if not all(row[k] == i[4] for row in self.binary_image[i[1]:i[1]+i[3]]):
-                                    tobe_merged = False
-                                    break
-                            if tobe_merged:
-                                merged_rectangles.append((min(i[0], j[0]), i[1], max(i[0]+i[2], j[0]+j[2]) - min(i[0], j[0]), i[3], i[4]))
-                                destroyed.append(i)
-                                destroyed.append(j)
-                                merged_all = False
-            self.rectangles = [r for r in self.rectangles if r not in destroyed] + merged_rectangles
-            destroyed = []
+        def merge(rect_list):
+            if len(rect_list) > 5000:
+                print("Warning: Merging step skipped to avoid long processing time. Please consider using a smaller image or reducing the number of colors.")
+                return rect_list
+            if len(rect_list) > 2500:
+                print(f"Warning: Merging {len(rect_list)} rectangles may take a long time. Consider using a smaller image or reducing the number of colors.")
+            merged_all = False
+            destroyed = set()
+            while not merged_all:
+                merged_all = True
+                merged_rectangles = []
+                for i in range(len(rect_list)):
+                    rect1 = rect_list[i]
+                    if rect1 in destroyed:
+                        continue
+                    for j in range(i + 1, len(rect_list)):
+                            rect2 = rect_list[j]
+                            if rect2 in destroyed:
+                                continue
+                            if rect1[0] == rect2[0] and rect1[2] == rect2[2]:
+                                tobe_merged = True
+                                for k in range(min(rect1[1], rect2[1]), max(rect1[1],rect2[1])):
+                                    if not all(pixel == rect1[4] for pixel in self.binary_image[k][rect1[0]:rect1[0]+rect1[2]]):
+                                        tobe_merged = False
+                                        break
+                                if tobe_merged:
+                                    merged_rectangles.append((rect1[0], min(rect1[1], rect2[1]), rect1[2], max(rect1[1]+rect1[3],rect2[1]+rect2[3])-min(rect1[1], rect2[1]), rect1[4]))
+                                    destroyed.add(rect1)
+                                    destroyed.add(rect2)
+                                    merged_all = False
+                            elif rect1[1] == rect2[1] and rect1[3] == rect2[3]:
+                                tobe_merged = True
+                                for k in range(min(rect1[0], rect2[0]), max(rect1[0],rect2[0])):
+                                    if not all(row[k] == rect1[4] for row in self.binary_image[rect1[1]:rect1[1]+rect1[3]]):
+                                        tobe_merged = False
+                                        break
+                                if tobe_merged:
+                                    merged_rectangles.append((min(rect1[0], rect2[0]), rect1[1], max(rect1[0]+rect1[2], rect2[0]+rect2[2]) - min(rect1[0], rect2[0]), rect1[3], rect1[4]))
+                                    destroyed.add(rect1)
+                                    destroyed.add(rect2)
+                                    merged_all = False
+                rect_list = [r for r in rect_list if r not in destroyed] + merged_rectangles
+                destroyed = set()
+                merged_rectangles = []
+            return rect_list
+
+
+        main_list = []
+        unique_color_indexes = list(set([i[4] for i in self.rectangles]))
+
+        for color_index in unique_color_indexes:
+            main_list += merge([i for i in self.rectangles if i[4] == color_index])
+
+        self.rectangles = main_list
 
  
 
@@ -126,15 +147,15 @@ class RectConverter:
         else:
             t1 = time.time()
             self._get_rectangles()
-            #print(f"First pass took {time.time() - t1:.2f} seconds")
+            print(f"First pass took {time.time() - t1:.2f} seconds")
             t1 = time.time()
             self._merge_rectangles()
-            #print(f"Second pass took {time.time() - t1:.2f} seconds")
+            print(f"Second pass took {time.time() - t1:.2f} seconds")
             t1 = time.time()
             bg_index = get_bg_index(self.rectangles)
             self.rectangles = add_bg_rectangle(self.rectangles, bg_index)
             self.encoder.rectangles = self.rectangles.copy()
-            #print(f"Third pass took {time.time() - t1:.2f} seconds")
+            print(f"Third pass took {time.time() - t1:.2f} seconds")
     
 
 
