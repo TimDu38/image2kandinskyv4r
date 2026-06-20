@@ -1,6 +1,6 @@
 # image2kandinskyv4r
 
-A Python PC-side converter that turns an image into compact drawing data for NumWorks/Kandinsky-style rendering.
+A Python PC-side converter that can turn images into a custom python format to load them on a Numworks calculator.
 
 The app provides a GUI to:
 - load an image,
