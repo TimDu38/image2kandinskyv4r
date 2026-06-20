@@ -31,5 +31,8 @@ match decoder_choice:
 
 
 t1 = time.monotonic()
-show_image(colors, rectangles)
+if decoder_choice == 3:
+    show_image(colors, rectangles, s=8)
+else:
+    show_image(colors, rectangles)
 print("Time taken:", time.monotonic() - t1)
