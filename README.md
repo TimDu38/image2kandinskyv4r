@@ -2,6 +2,34 @@
 
 A Python PC-side converter that can turn images into a custom python format to load them on a Numworks calculator.
 
+> **Purpose:** This tool is mostly made for **game development assets** (or similar graphics):
+> - low amount of unique colors,
+> - lots of sharp edges / pixel-art-like content,
+> - small image sizes.
+>
+> It is **not** intended to convert typical photos into NumWorks-friendly data efficiently.
+
+## Quick start
+
+1. Install dependency:
+   ```bash
+   pip install pillow
+   ```
+2. Run the app:
+   ```bash
+   python src/main.py
+   ```
+3. In the GUI:
+   - Select an image
+   - Choose a conversion mode (recommended: **String mini** when compatible)
+   - Click **Convert**
+4. Open generated `data.py` and copy all content.
+5. On NumWorks website, create a script and paste `data.py` content.
+6. Copy the matching decoder from `src/decoders/` into a second NumWorks script.
+7. Transfer both scripts to calculator, import them, and call the decoder.
+
+---
+
 The app provides a GUI to:
 - load an image,
 - convert it into color + rectangle data,
