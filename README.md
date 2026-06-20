@@ -66,7 +66,7 @@ python src/main.py
 ## How to use (PC side)
 
 1. Click **Select Image** and choose your source image.
-2. (Optional) Click **Load Palette** to restrict output colors to a palette image.
+2. (Optional) Click **Load Palette**.
 3. Click **Preview** to visualize conversion.
 4. Choose conversion mode from the dropdown next to **Convert**:
    - Raw
@@ -78,6 +78,23 @@ python src/main.py
 6. The converter writes output to **`data.py`**.
 
 > Important: `data.py` is regenerated/overwritten each time you convert.
+
+---
+
+## Palette loading mode (important)
+
+Palette loading mode is especially useful for games and multi-image projects.
+
+How it works:
+1. Prepare an image that contains **all colors of your target palette**.
+2. Click **Load Palette** and select that palette image.
+3. From now on, every image you load will be encoded using that same loaded palette (until you click **Unload Palette**).
+4. Each image must only contain colors that exist in the loaded palette, otherwise conversion will fail.
+
+Why this is useful:
+- Multiple encoded images can share the same `colors` definition.
+- In your decoder-side workflow, you can reuse one palette/colors value across many images and only swap rectangle payloads.
+- This helps keep assets consistent and can reduce duplicated color data in game pipelines.
 
 ---
 
@@ -100,15 +117,32 @@ After encoding on PC:
 
 ---
 
-## Conversion modes (summary)
+## Conversion modes (performance / memory tradeoffs)
 
-- **Raw**: plain tuple/list representation.
-- **Raw+**: delta-style rectangle stream for improved compactness.
-- **Hex**: hexadecimal string encoding (strict size/value limits).
-- **String**: compact character encoding (larger supported ranges than mini).
-- **String mini**: very compact variant with tighter limits.
+- **Raw**
+  - Fastest to decode by far.
+  - Heaviest on RAM and storage.
 
-Use the decoder that corresponds to the selected mode.
+- **Raw+**
+  - Somewhat slower than Raw.
+  - Somewhat less heavy on storage.
+  - Similar RAM profile to Raw.
+
+- **Hex**
+  - Outdated mode.
+  - Generally recommended to avoid.
+
+- **String mini** (recommended)
+  - Recommended default in most practical cases.
+  - Much slower than Raw (still acceptable in many use cases).
+  - Far lighter on RAM and storage.
+  - Limits: **max 92 unique colors** and **max 91x91 image dimensions**.
+
+- **String**
+  - By far the slowest mode.
+  - Use when you want String mini-like storage/memory efficiency but need images larger than 91x91 and/or more than 92 colors.
+
+Always use the decoder that matches the selected conversion mode.
 
 ---
 
