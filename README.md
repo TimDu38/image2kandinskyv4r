@@ -72,6 +72,7 @@ Internally it:
 - Python 3.10+ (recommended)
 - Pillow
 - Tkinter (usually included with standard Python installations)
+- Kandinsky (if you want to emulate the calculator/preview with `src/decoders/decoder_test_script.py` directly on PC)
 
 Install dependency:
 
