@@ -1,3 +1,11 @@
+> [!IMPORTANT]
+> **Choose the right version for your use case**
+>
+> - **[TimDu38/image2kandinskyv4r](https://github.com/TimDu38/image2kandinskyv4r)** → recommended for most practical use, especially game-dev assets (small images, sharp edges, low color count), with much faster decode on calculator.
+> - **[TimDu38/image2kandinskyv4](https://github.com/TimDu38/image2kandinskyv4)** → recommended for compression/showcase workflows, including larger image conversions (pictures conversion, for example), but significantly slower to decode on calculator.
+>
+> Both are **PC-side converters** for NumWorks/Kandinsky: encode on computer, then copy generated data + matching decoder script to NumWorks.
+> 
 # image2kandinskyv4r
 
 A Python PC-side converter that can turn images into a custom python format to load them on a Numworks calculator.
